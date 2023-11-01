@@ -1,0 +1,8 @@
+# build --repo_env=CC=clang-15
+# build --copt='-std=c99'
+# test --cxxopt=-std=c++14
+
+build --copt='-Werror'
+build --copt='-Wall'
+build --copt='-Wextra'
+build --copt='-pedantic'

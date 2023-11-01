@@ -1,0 +1,30 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "arena",
+    srcs = ["arena.c"],
+    hdrs = ["arena.h"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
+    name = "util",
+    srcs = ["util.c"],
+    hdrs = ["util.h"],
+    deps = [":arena"],
+)
+
+cc_library(
+    name = "jsons",
+    srcs = ["jsons.c"],
+    hdrs = ["jsons.h"],
+    visibility = ["//visibility:public"],
+    deps = [":util", ":arena"],
+)
+
+cc_test(
+  name = "jsons_test",
+  size = "small",
+  srcs = ["jsons_test.cc"],
+  deps = ["@com_google_googletest//:gtest_main", ":jsons"],
+)
