@@ -3,46 +3,15 @@
 #include <stdio.h>   // TODO: remove
 #include <stdlib.h>  // TODO: remove
 
+#include "jsons_impl.h"
 #include "util.h"
-
-#define STR_NULL "null"
-#define STR_NULL_LEN (sizeof(STR_NULL) - 1)
-#define STR_TRUE "true"
-#define STR_TRUE_LEN (sizeof(STR_TRUE) - 1)
-#define STR_FALSE "false"
-#define STR_FALSE_LEN (sizeof(STR_FALSE) - 1)
-
-// TODO: Eventually allow for dynamic realloc.
-#define STR_MAX_LEN (ptrdiff_t)100
 
 static void crash(const char *msg) {
     printf("\n============\n%s\n============\n", msg);
     abort();
 }
 
-// TODO: check that casting is only done where needed.
-typedef enum {
-    json_done = _json_end + 1,
-
-    json_arry_post_elm,
-
-    json_obj_post_key,
-    json_obj_val,
-    json_obj_post_val,
-} json_internal_states;
-
-typedef struct frame frame;
-struct frame {
-    frame *prev;
-    int32_t type;
-
-    // State of the frame.
-    // Some types will use len separately without str.
-    s8 str;
-    ptrdiff_t len;
-};
-
-frame *new_frame(arena *a, frame *prev, json_type type) {
+static frame *new_frame(arena *a, frame *prev, json_type type) {
     frame *r = new (a, frame, 1, 0);
     r->prev = prev;
     r->type = type;
@@ -57,14 +26,6 @@ static void frame_buf_putc(frame *f, const uint8_t c) {
     f->str.buf[f->len] = c;
     f->len++;
 }
-
-typedef struct _json_streamer _json_streamer;
-typedef struct _json_streamer {
-    arena a;  // TODO: Pass arena through frames so freeing also works...
-    jsons_event_cb cb;
-
-    frame *sp;
-} _json_streamer;
 
 _json_streamer *new__json_streamer(arena a, jsons_event_cb cb) {
     json_streamer r = new (&a, _json_streamer, 1, 0);
@@ -202,7 +163,7 @@ static void expect_value(_json_streamer *j, const uint8_t c) {
             return;
         case '"':
             push(j, json_str);
-            j->sp->str = new_s8(&j->a, STR_MAX_LEN);
+            j->sp->str = new_s8(&j->a, JSON_STR_MAX_LEN);
             return;
             // TODO: Handle json_num
         default:
@@ -259,7 +220,7 @@ static void feed(_json_streamer *j, const uint8_t c) {
             }
             if (c == '"') {
                 push(j, json_obj_key);
-                j->sp->str = new_s8(&j->a, STR_MAX_LEN);
+                j->sp->str = new_s8(&j->a, JSON_STR_MAX_LEN);
                 return;
             }
             crash("invalid, expected \" or }");
@@ -355,5 +316,6 @@ static void terminate(_json_streamer __attribute((unused)) * j) {
 }
 
 // public entrypoints
+// TODO: proper error handling - return errors instead of crashing.
 void json_streamer_feed(json_streamer j, const uint8_t c) { feed(j, c); }
 void json_streamer_terminate(json_streamer j) { terminate(j); }

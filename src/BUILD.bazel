@@ -16,7 +16,7 @@ cc_library(
 
 cc_library(
     name = "jsons",
-    srcs = ["jsons.c"],
+    srcs = ["jsons.c","jsons_impl.h"],
     hdrs = ["jsons.h"],
     visibility = ["//visibility:public"],
     deps = [":util", ":arena"],
