@@ -52,17 +52,17 @@ static void emit(_json_streamer *j) {
     switch (j->sp->type) {
         case json_num:
             // TODO: actually parse buffer.
-            v->num = 1337;
+            v->val_num = 1337;
             break;
         case json_str:
             // TODO: maybe add nul byte?
-            v->str = j->sp->str.buf;
-            v->str_len = j->sp->str.len;
+            v->val_str.str = j->sp->str.buf;
+            v->val_str.str_len = j->sp->str.len;
             break;
         case json_obj_key:
             // TODO: maybe add nul byte?
-            v->str = j->sp->str.buf;
-            v->str_len = j->sp->str.len;
+            v->val_str.str = j->sp->str.buf;
+            v->val_str.str_len = j->sp->str.len;
             break;
 
             // Nothing else to do for the others.

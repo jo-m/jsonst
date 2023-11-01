@@ -19,15 +19,15 @@ void cb(const jsons_path *path, const jsons_value *value) {
             printf("jsons_event_cb(%p, %d, false)\n", (void *)path, value->type);
             break;
         case json_num:
-            printf("jsons_event_cb(%p, %d, %f)\n", (void *)path, value->type, value->num);
+            printf("jsons_event_cb(%p, %d, %f)\n", (void *)path, value->type, value->val_num);
             break;
         case json_str:
             printf("jsons_event_cb(%p, %d, '%.*s')\n", (void *)path, value->type,
-                   (int)value->str_len, value->str);
+                   (int)value->val_str.str_len, value->val_str.str);
             break;
         case json_obj_key:
             printf("jsons_event_cb(%p, %d, k='%.*s')\n", (void *)path, value->type,
-                   (int)value->str_len, value->str);
+                   (int)value->val_str.str_len, value->val_str.str);
             break;
         case json_arry:
             printf("jsons_event_cb(%p, %d, [] beg or end)\n", (void *)path, value->type);

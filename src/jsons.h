@@ -29,14 +29,14 @@ typedef struct jsons_path {
 
     union {
         // Set if type == json_arry.
-        int ix;
+        int arry_ix;
 
         // Set if type == json_obj.
         struct {
-            uint8_t* key;
-            ptrdiff_t key_len;
-        };
-    };
+            uint8_t* str;
+            ptrdiff_t str_len;
+        } obj_key;
+    } props;
 } jsons_path;
 
 typedef struct {
@@ -44,13 +44,13 @@ typedef struct {
 
     union {
         // Set if type == json_num.
-        double num;
+        double val_num;
 
         // Set if type == json_str.
         struct {
             uint8_t* str;
             ptrdiff_t str_len;
-        };
+        } val_str;
     };
 } jsons_value;
 
