@@ -6,6 +6,15 @@
 #include "jsons_impl.h"
 #include "util.h"
 
+// TODO: remove
+static void visualize_stack(const frame *top) {
+    if (top == NULL) {
+        return;
+    }
+    visualize_stack(top->prev);
+    printf("'%c' > ", top->type);
+}
+
 static void crash(const char *msg) {
     printf("\n============\n%s\n============\n", msg);
     abort();
@@ -84,12 +93,14 @@ static bool is_ws(const char c) {
 }
 
 static void push(_json_streamer *j, json_type type) {
-    printf("push(%d -> %d)\n", j->sp->type, type);
+    visualize_stack(j->sp);
+    printf("push('%c')\n", type);
     j->sp = new_frame(&(j->a), j->sp, type);
 }
 
-static void pop(_json_streamer *j, __attribute((unused)) const char c, const int expect_type) {
-    printf("pop(%d)\n", j->sp->type);
+static void pop(_json_streamer *j, const int expect_type) {
+    visualize_stack(j->sp);
+    printf("pop('%c'=='%c')\n", j->sp->type, expect_type);
     if (j->sp == NULL) {
         crash("pop: stack is empty");
     }
@@ -220,7 +231,8 @@ static void expect_value(_json_streamer *j, const char c) {
 }
 
 static void feed(_json_streamer *j, const char c) {
-    printf("feed(%d, '%c')\n", j->sp->type, c);
+    visualize_stack(j->sp);
+    printf("feed(\"%c\")\n", c);
 
     if (j->sp == NULL) {
         if (is_ws(c)) {
@@ -243,7 +255,7 @@ static void feed(_json_streamer *j, const char c) {
             }
             if (c == ']') {
                 emit(j);
-                pop(j, c, json_arry);
+                pop(j, json_arry);
                 return;
             }
             // A value MUST follow now.
@@ -256,14 +268,14 @@ static void feed(_json_streamer *j, const char c) {
                 return;
             }
             if (c == ',') {
-                pop(j, c, json_arry_elm);
+                pop(j, json_arry_elm);
                 push(j, (int)json_arry_elm_next);
                 return;
             }
             if (c == ']') {
-                pop(j, c, json_arry_elm);
+                pop(j, json_arry_elm);
                 emit(j);
-                pop(j, c, json_arry);
+                pop(j, json_arry);
                 return;
             }
             crash("invalid, expected , or ]");
@@ -273,7 +285,7 @@ static void feed(_json_streamer *j, const char c) {
             if (is_ws(c)) {
                 return;
             }
-            pop(j, c, json_arry_elm_next);
+            pop(j, json_arry_elm_next);
             push(j, json_arry_elm);
             expect_value(j, c);
             return;
@@ -283,7 +295,7 @@ static void feed(_json_streamer *j, const char c) {
             }
             if (c == '}') {
                 emit(j);
-                pop(j, c, -1);
+                pop(j, -1);
                 return;
             }
             if (c == '"') {
@@ -307,7 +319,7 @@ static void feed(_json_streamer *j, const char c) {
                 return;
             }
             if (c == ':') {
-                pop(j, c, -1);
+                pop(j, -1);
                 push(j, (int)json_obj_val);
                 // We now still have the key right below.
                 return;
@@ -325,13 +337,13 @@ static void feed(_json_streamer *j, const char c) {
                 return;
             }
             if (c == ',') {
-                pop(j, c, -1);
+                pop(j, -1);
                 return;
             }
             if (c == '}') {
-                pop(j, c, -1);
+                pop(j, -1);
                 emit(j);
-                pop(j, c, -1);
+                pop(j, -1);
                 return;
             }
             crash("invalid, expected , or }");
@@ -343,7 +355,7 @@ static void feed(_json_streamer *j, const char c) {
             j->sp->len++;
             if (j->sp->len == STR_NULL_LEN) {
                 emit(j);
-                pop(j, c, json_null);
+                pop(j, json_null);
             }
             return;
         case json_true:
@@ -353,7 +365,7 @@ static void feed(_json_streamer *j, const char c) {
             j->sp->len++;
             if (j->sp->len == STR_TRUE_LEN) {
                 emit(j);
-                pop(j, c, json_true);
+                pop(j, json_true);
             }
             return;
         case json_false:
@@ -363,13 +375,13 @@ static void feed(_json_streamer *j, const char c) {
             j->sp->len++;
             if (j->sp->len == STR_FALSE_LEN) {
                 emit(j);
-                pop(j, c, json_false);
+                pop(j, json_false);
             }
             return;
         case json_str:
             if (c == '"') {
                 emit(j);
-                pop(j, c, json_str);
+                pop(j, json_str);
                 return;
             }
             // TODO: handle utf8 and escape sequences.
@@ -378,7 +390,7 @@ static void feed(_json_streamer *j, const char c) {
         case json_num:
             if (!is_num(c, false)) {
                 emit(j);
-                pop(j, c, json_num);
+                pop(j, json_num);
 
                 // Numbers are the only type delimited by a char which already belongs to the next
                 // token. Thus, we have feed that token to the parser again.

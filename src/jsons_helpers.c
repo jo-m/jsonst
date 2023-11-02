@@ -18,14 +18,13 @@ const char *json_type_to_str(json_type type) {
             return "json_str";
         case json_arry:
             return "json_arry";
+        case json_arry_elm:
+            return "json_arry_elm";
         case json_obj:
             return "json_obj";
         case json_obj_key:
             return "json_obj_key";
-        case _json_end:
-            break;
     }
 
-    abort();
     return "__UNKNOWN__";
 }

@@ -6,31 +6,28 @@
 #include "arena.h"
 
 typedef enum {
-    json_doc = 0,
-    json_null = 1,
-    json_true = 2,
-    json_false = 3,
-    json_num = 4,
-    json_str = 5,
+    json_doc = 'd',
+    json_null = '0',
+    json_true = 't',
+    json_false = 'f',
+    json_num = '%',
+    json_str = 's',
 
-    json_arry = 10,  // TODO: expect ws, value or ]
+    json_arry = '[',      // TODO: expect value or ']'
+    json_arry_elm = '*',  // TODO: expect ',' or ']'
 
-    json_obj = 20,
-    json_obj_key = 21,
-    _json_end,
+    json_obj = '{',
+    json_obj_key = '=',
 } json_type;
 
 // TODO: Move back to jsons_impl.h
 // TODO: check that casting is only done where needed.
 typedef enum {
-    json_done = _json_end + 1,
+    json_arry_elm_next = '+',  // TODO: expect value
 
-    json_arry_elm,       // TODO: 24 expect ws, ',' or ']'
-    json_arry_elm_next,  // TODO: 25 expect ws or value
-
-    json_obj_post_key,
-    json_obj_val,
-    json_obj_post_val,
+    json_obj_post_key = ':',
+    json_obj_val = 'v',
+    json_obj_post_val = '?',
 } json_internal_states;
 
 typedef struct jsons_path jsons_path;
