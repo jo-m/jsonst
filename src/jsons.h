@@ -16,18 +16,19 @@ typedef enum {
     json_arry = '[',      // TODO: expect value or ']'
     json_arry_elm = '*',  // TODO: expect ',' or ']'
 
-    json_obj = '{',
-    json_obj_key = '=',
+    json_obj = '{',      // TODO: expect '}' or string/key
+    json_obj_key = 'k',  // TODO: expect '"', will remain on stack
 } json_type;
 
 // TODO: Move back to jsons_impl.h
 // TODO: check that casting is only done where needed.
+// TODO: rename array and obj enums to be consistent.
 typedef enum {
     json_arry_elm_next = '+',  // TODO: expect value
 
-    json_obj_post_key = ':',
-    json_obj_val = 'v',
-    json_obj_post_val = '?',
+    json_obj_post_key = ':',    // TODO: expect ':'
+    json_obj_post_colon = '_',  // TODO: expect value
+    json_obj_next = 'v',        // TODO: expect ',' or '}'
 } json_internal_states;
 
 typedef struct jsons_path jsons_path;

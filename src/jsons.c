@@ -1,5 +1,6 @@
 #include "jsons.h"
 
+#include <stdarg.h>  // TODO: remove
 #include <stdio.h>   // TODO: remove
 #include <stdlib.h>  // TODO: remove
 
@@ -15,8 +16,16 @@ static void visualize_stack(const frame *top) {
     printf("'%c' > ", top->type);
 }
 
-static void crash(const char *msg) {
-    printf("\n============\n%s\n============\n", msg);
+static void crash(const char *format, ...) {
+    printf("\n============ CRASH ============\n");
+
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+
+    va_end(args);
+
+    printf("\n============ /CRASH ===========\n");
     abort();
 }
 
@@ -53,6 +62,7 @@ json_streamer new_json_streamer(arena a, jsons_event_cb cb) {
     return r;
 }
 
+// TODO: start/end
 static void emit(_json_streamer *j) {
     arena scratch = j->a;
 
@@ -100,75 +110,19 @@ static void push(_json_streamer *j, json_type type) {
 
 static void pop(_json_streamer *j, const int expect_type) {
     visualize_stack(j->sp);
-    printf("pop('%c'=='%c')\n", j->sp->type, expect_type);
+    printf("pop('%c')\n", j->sp->type);
     if (j->sp == NULL) {
         crash("pop: stack is empty");
     }
 
-    if (expect_type >= 0) {
-        assert(j->sp->type == expect_type);
-    }
+    assert(j->sp->type == expect_type);
 
-    // const frame *popped = j->sp;
     j->sp = j->sp->prev;
 
     if (j->sp == NULL) {
         // Reached EOD.
         return;
     }
-
-    // // We just ended an array element.
-    // if (j->sp->type == json_arry_elm_next) {
-    //     printf("ending array element\n");
-    //     pop(j,c,json_arry_elm_next);
-    //     assert(j->sp->type==json_arry);
-    //     j->sp->len++;
-    //     push(j,json_arry_elm);
-    // }
-
-    // // We just ended an array element.
-    // if (j->sp->type == json_arry && popped->type != (int)json_arry_elm) {
-    //     j->sp->len++;  // We count array elements here.
-
-    //     push(j, (int)json_arry_elm);
-    //     // if (c != ']') {
-    //     //     push(j, (int)json_arry_elm);
-    //     // } else {
-    //     //     emit(j);
-    //     //     pop(j, c,-1);
-    //     // }
-
-    //     return;
-    // }
-
-    // // We just ended an object value.
-    // if (j->sp->type == json_obj_val && popped->type != (int)json_obj_post_val) {
-    //     assert(j->sp->prev != NULL);
-    //     assert(j->sp->prev->type == json_obj_key);
-    //     assert(j->sp->prev->prev != NULL);
-    //     assert(j->sp->prev->prev->type == json_obj);
-
-    //     j->sp->prev->prev->len++;  // We count object elements here.
-
-    //     pop(j, c,-1);  // Pop json_obj_val.
-    //     pop(j, c,-1);  // Pop json_obj_key.
-
-    //     push(j, (int)json_obj_post_val);
-    //     // if (c != '}') {
-    //     //     push(j, (int)json_obj_post_val);
-    //     // } else {
-    //     //     emit(j);
-    //     //     pop(j, c,-1);
-    //     // }
-
-    //     return;
-    // }
-
-    // // We just ended the document.
-    // if (j->sp->type == json_doc) {
-    //     pop(j, c,json_doc);
-    //     return;
-    // }
 }
 
 bool is_num(const char c, const bool start_only) {
@@ -249,7 +203,6 @@ static void feed(_json_streamer *j, const char c) {
             expect_value(j, c);
             return;
         case json_arry:
-            // TODO: json_arry = 10, // expect ws, value or ]
             if (is_ws(c)) {
                 return;
             }
@@ -258,18 +211,17 @@ static void feed(_json_streamer *j, const char c) {
                 pop(j, json_arry);
                 return;
             }
-            // A value MUST follow now.
-            push(j, (int)json_arry_elm);
+            push(j, json_arry_elm);
             expect_value(j, c);
             return;
         case json_arry_elm:
-            // TODO: json_arry_elm, // expect ws, ',' or ']'
             if (is_ws(c)) {
                 return;
             }
             if (c == ',') {
                 pop(j, json_arry_elm);
-                push(j, (int)json_arry_elm_next);
+                // TODO assert here
+                push(j, json_arry_elm_next);
                 return;
             }
             if (c == ']') {
@@ -281,11 +233,11 @@ static void feed(_json_streamer *j, const char c) {
             crash("invalid, expected , or ]");
             return;
         case json_arry_elm_next:
-            // TODO: json_arry_elm_next, 25 expect ws or value
             if (is_ws(c)) {
                 return;
             }
             pop(j, json_arry_elm_next);
+            // TODO assert here
             push(j, json_arry_elm);
             expect_value(j, c);
             return;
@@ -295,7 +247,7 @@ static void feed(_json_streamer *j, const char c) {
             }
             if (c == '}') {
                 emit(j);
-                pop(j, -1);
+                pop(j, json_obj);
                 return;
             }
             if (c == '"') {
@@ -306,9 +258,10 @@ static void feed(_json_streamer *j, const char c) {
             crash("invalid, expected \" or }");
             return;
         case json_obj_key:
+            // TODO: escaping etc.
             if (c == '"') {
                 emit(j);
-                push(j, (int)json_obj_post_key);
+                push(j, json_obj_post_key);
                 // We leave the key on the stack for now.
                 return;
             }
@@ -319,31 +272,38 @@ static void feed(_json_streamer *j, const char c) {
                 return;
             }
             if (c == ':') {
-                pop(j, -1);
-                push(j, (int)json_obj_val);
-                // We now still have the key right below.
+                pop(j, json_obj_post_key);
+                // TODO assert here
+                push(j, json_obj_post_colon);
+                // We now still have the key on the stack one below.
                 return;
             }
             crash("invalid: expected ':'");
             return;
-        case json_obj_val:
+        case json_obj_post_colon:
             if (is_ws(c)) {
                 return;
             }
+            pop(j, json_obj_post_colon);
+            // TODO assert here
+            push(j, json_obj_next);
             expect_value(j, c);
             return;
-        case json_obj_post_val:
+        case json_obj_next:
             if (is_ws(c)) {
                 return;
             }
             if (c == ',') {
-                pop(j, -1);
+                pop(j, json_obj_next);
+                pop(j, json_obj_key);
+                assert(j->sp->type == json_obj);
                 return;
             }
             if (c == '}') {
-                pop(j, -1);
+                pop(j, json_obj_next);
+                pop(j, json_obj_key);
                 emit(j);
-                pop(j, -1);
+                pop(j, json_obj);
                 return;
             }
             crash("invalid, expected , or }");
@@ -398,11 +358,11 @@ static void feed(_json_streamer *j, const char c) {
 
                 return;
             }
-            // TODO: be more strict about structure.
+            // TODO: be more strict about what we accept.
             frame_buf_putc(j->sp, c);
             return;
         default:
-            printf("unhandled %d", (int)j->sp->type);
+            printf("unhandled %c", j->sp->type);
             crash("feed: unhandled");
     }
 }

@@ -5,10 +5,7 @@
 #include "src/jsons.h"
 #include "src/jsons_helpers.h"
 
-// static const char *doc =
-//     " [ null , false  , \"hello there\"  ,true, {\"mykey\": false , \"another\": \"val\"}, 123]";
-
-static const char *doc = " [ true, false , null  ,[]  , 123, 123,true ] ";
+static const char *doc = "{ \"1\":{\"1\":[1,2,3], \"2\":{\"1\":{}}}, \"2\":{}, \"3\":[1,[2]] }";
 
 void cb(const jsons_path *path, const jsons_value *value) {
     switch (value->type) {

@@ -17,7 +17,7 @@ void feed_doc(json_streamer j, const std::string doc) {
 }
 
 void parse_doc(const char *doc) {
-    arena a = new_arena(2000);
+    arena a = new_arena(3000);
     EXPECT_NE(a.beg, nullptr);
 
     json_streamer j = new_json_streamer(a, cb);
@@ -28,7 +28,7 @@ void parse_doc(const char *doc) {
     arena_free(a);
 }
 
-TEST(JsonsTest, ListBasics) {
+TEST(JsonsTest, ListSimple) {
     parse_doc("[]");
     parse_doc("[ ]");
     parse_doc("[  ]");
@@ -42,28 +42,21 @@ TEST(JsonsTest, ListBasics) {
     parse_doc(" [ true, false , null  ,[]  , 123, 123,true ] ");
 }
 
-TEST(JsonsTest, ListElem) { parse_doc("[ ]"); }
+TEST(JsonsTest, ListNested) {
+    parse_doc("[[[],[[[[]]]], []]]");
+    parse_doc("[[[ ],[[[ [] ],[], [],[[ []]], [] ]], []]]");
+}
 
-// TEST(JsonsTest, BasicAssertions) {
-//     arena a = new_arena(1000);
-//     EXPECT_NE(a.beg, nullptr);
+TEST(JsonsTest, ObjectSimple) {
+    parse_doc("{}");
+    parse_doc("{ }");
+    parse_doc("{  }");
+    parse_doc(" {   } ");
+    parse_doc("{ \"ky\": null}  ");
+    parse_doc("{ \"ky\": 123}  ");
+    parse_doc("{ \"ky\": 123 }  ");
+}
 
-//     json_streamer j = new_json_streamer(a, cb);
-//     EXPECT_NE(j, nullptr);
-//     feed_doc(j, "[,]");  // TODO: this should fail.
-
-//     json_streamer_terminate(j);
-//     arena_free(a);
-// }
-
-// TEST(JsonsTest, Numbers) {
-//     arena a = new_arena(1000);
-//     EXPECT_NE(a.beg, nullptr);
-
-//     json_streamer j = new_json_streamer(a, cb);
-//     EXPECT_NE(j, nullptr);
-//     feed_doc(j, "[123, 45.32, 1e8, -2]");
-
-//     json_streamer_terminate(j);
-//     arena_free(a);
-// }
+TEST(JsonsTest, ObjectNested) {
+    parse_doc("{ \"1\":{\"1\":{}, \"2\":{\"1\":{}}}, \"2\":{}, \"3\":{} }");
+}
