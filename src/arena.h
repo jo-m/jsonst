@@ -4,12 +4,16 @@
 
 // https://nullprogram.com/blog/2023/09/27/
 typedef struct {
+    // TODO: maybe make uint8_t
     char *beg;
     char *end;
 } arena;
 
 arena new_arena(ptrdiff_t cap);
 
+void arena_free(arena a);
+
+// TODO: improve or remove
 // // a: args which are returned to caller
 // // scratch: temporary objects whose lifetime ends when the function returns
 // // all allocations from a scratch arena are implicitly freed upon return

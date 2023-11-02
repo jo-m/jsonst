@@ -30,20 +30,19 @@ arena new_scratch_div(arena *a, ptrdiff_t div);
 #define new(a, t, n, f)(t *) alloc(a, sizeof(t), _Alignof(t), n, f)
 // clang-format on
 
-void copy(uint8_t *restrict dst, uint8_t *restrict src, ptrdiff_t len);
-
 #define s8(s) \
-    (s8) { (uint8_t *)s, lengthof(s) }
+    (s8) { (char *)s, lengthof(s) }
 
 // https://nullprogram.com/blog/2023/10/08/
+// Guaranteed to always be null terminated, but len is without the 0 byte.
 typedef struct {
-    uint8_t *buf;
+    char *buf;
     ptrdiff_t len;
 } s8;
 
 s8 new_s8(arena *a, ptrdiff_t len);
 
-s8 s8span(uint8_t *beg, uint8_t *end);
+s8 s8span(char *beg, char *end);
 
 int32_t s8equal(s8 a, s8 b);
 

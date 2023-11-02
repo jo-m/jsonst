@@ -4,5 +4,6 @@ cc_binary(
     srcs = ["main.c"],
     deps = [
         "//src:jsons",
+        "//src:jsons_helpers",
     ],
 )

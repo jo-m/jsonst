@@ -1,9 +1,13 @@
 # build --repo_env=CC=clang-15
 
 build --conlyopt='-std=c11'
-test --cxxopt='-std=c++14'
+build --cxxopt='-std=c++14'
 
-build --copt='-Werror'
 build --copt='-Wall'
+build --copt='-Werror'
 build --copt='-Wextra'
-build --copt='-pedantic'
+build --copt='-Wpedantic'
+build --copt='-Wshadow'
+build --copt='-Wsign-compare'
+build --copt='-Wunreachable-code'
+build --copt='-iquotesrc/'

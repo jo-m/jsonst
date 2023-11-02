@@ -15,16 +15,31 @@ cc_library(
 )
 
 cc_library(
+    name = "jsons_helpers",
+    srcs = ["jsons_helpers.c"],
+    hdrs = ["jsons_helpers.h"],
+    deps = [":jsons"],
+    visibility = ["//visibility:public"],
+)
+
+cc_library(
     name = "jsons",
     srcs = ["jsons.c","jsons_impl.h"],
     hdrs = ["jsons.h"],
-    visibility = ["//visibility:public"],
     deps = [":util", ":arena"],
+    visibility = ["//visibility:public"],
 )
 
 cc_test(
   name = "jsons_test",
   size = "small",
   srcs = ["jsons_test.cc"],
-  deps = ["@com_google_googletest//:gtest_main", ":jsons"],
+  deps = ["@com_google_googletest//:gtest_main", ":jsons", ":jsons_helpers"],
+)
+
+cc_test(
+  name = "util_test",
+  size = "small",
+  srcs = ["util_test.cc"],
+  deps = ["@com_google_googletest//:gtest_main", ":util"],
 )

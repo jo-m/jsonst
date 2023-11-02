@@ -11,17 +11,7 @@
 
 // TODO: Eventually allow for dynamic realloc.
 #define JSON_STR_MAX_LEN (ptrdiff_t)100
-
-// TODO: check that casting is only done where needed.
-typedef enum {
-    json_done = _json_end + 1,
-
-    json_arry_post_elm,
-
-    json_obj_post_key,
-    json_obj_val,
-    json_obj_post_val,
-} json_internal_states;
+#define JSON_NUM_STR_MAX_LEN (ptrdiff_t)100
 
 typedef struct frame frame;
 struct frame {

@@ -32,7 +32,7 @@ arena new_scratch_div(arena *a, const ptrdiff_t div) {
     return new_scratch(a, cap);
 }
 
-void copy(uint8_t *restrict dst, uint8_t *restrict src, ptrdiff_t len) {
+void copy(char *restrict dst, char *restrict src, ptrdiff_t len) {
     for (ptrdiff_t i = 0; i < len; i++) {
         dst[i] = src[i];
     }
@@ -40,12 +40,13 @@ void copy(uint8_t *restrict dst, uint8_t *restrict src, ptrdiff_t len) {
 
 s8 new_s8(arena *a, const ptrdiff_t len) {
     s8 r = {0};
-    r.buf = new (a, uint8_t, len, 0);
+    // +1 is for C 0 byte interop.
+    r.buf = new (a, char, len + 1, 0);
     r.len = len;
     return r;
 }
 
-s8 s8span(uint8_t *beg, uint8_t *end) {
+s8 s8span(char *beg, char *end) {
     s8 s = {0};
     s.buf = beg;
     s.len = end - beg;
@@ -76,9 +77,7 @@ ptrdiff_t s8cmp(s8 a, s8 b) {
 }
 
 s8 s8clone(arena *a, s8 s) {
-    s8 c = {0};
-    c.buf = new (a, uint8_t, s.len, 0);
-    c.len = s.len;
+    s8 c = new_s8(a, s.len);
     copy(c.buf, s.buf, s.len);
     return c;
 }
