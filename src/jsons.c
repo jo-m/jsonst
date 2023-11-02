@@ -1,5 +1,6 @@
 #include "jsons.h"
 
+#include <ctype.h>
 #include <stdarg.h>  // TODO: remove
 #include <stdio.h>   // TODO: remove
 #include <stdlib.h>  // TODO: remove
@@ -39,7 +40,7 @@ static frame *new_frame(arena *a, frame *prev, json_type type) {
 static void frame_buf_putc(frame *f, const char c) {
     assert(f->str.buf != NULL);
     if (f->len >= f->str.len) {
-        crash("frame_buf_putc: buffer full");
+        crash("frame_buf_putc(): buffer full");
     }
     f->str.buf[f->len] = c;
     f->len++;
@@ -73,7 +74,8 @@ static void emit(_json_streamer *j) {
             char *endptr;
             v->val_num = strtod(j->sp->str.buf, &endptr);
             if (endptr != j->sp->str.buf + j->sp->len) {
-                crash("failed to parse number or did not parse entire buffer");
+                crash("failed to parse number or did not parse entire buffer '%.*s'", j->sp->len,
+                      j->sp->str.buf);
             }
         } break;
         case json_str:
@@ -125,29 +127,22 @@ static void pop(_json_streamer *j, const int expect_type) {
     }
 }
 
-bool is_num(const char c, const bool start_only) {
-    if (c >= '0' && c <= '9') {
+bool is_num(const char c) {
+    if (isdigit(c)) {
         return true;
     }
-    if (c == '-') {
-        return true;
-    }
-
-    if (start_only) {
-        return false;
-    }
-
     switch (c) {
         case '.':
         case 'e':
         case 'E':
         case '+':
+        case '-':
             return true;
     }
     return false;
 }
 
-static void expect_value(_json_streamer *j, const char c) {
+static void expect_start_value(_json_streamer *j, const char c) {
     switch (c) {
         case '[':
             push(j, json_arry);
@@ -174,13 +169,13 @@ static void expect_value(_json_streamer *j, const char c) {
             j->sp->str = new_s8(&j->a, JSON_STR_MAX_LEN);
             return;
         default:
-            if (is_num(c, true)) {
+            if (isdigit(c) || c == '-') {
                 push(j, json_num);
                 j->sp->str = new_s8(&j->a, JSON_NUM_STR_MAX_LEN);
                 frame_buf_putc(j->sp, c);
                 return;
             }
-            crash("expect_value: unexpected char");
+            crash("expect_start_value(): unexpected char '%c'", c);
     }
 }
 
@@ -200,7 +195,7 @@ static void feed(_json_streamer *j, const char c) {
             if (is_ws(c)) {
                 return;
             }
-            expect_value(j, c);
+            expect_start_value(j, c);
             return;
         case json_arry:
             if (is_ws(c)) {
@@ -212,7 +207,7 @@ static void feed(_json_streamer *j, const char c) {
                 return;
             }
             push(j, json_arry_elm);
-            expect_value(j, c);
+            expect_start_value(j, c);
             return;
         case json_arry_elm:
             if (is_ws(c)) {
@@ -230,7 +225,7 @@ static void feed(_json_streamer *j, const char c) {
                 pop(j, json_arry);
                 return;
             }
-            crash("invalid, expected , or ]");
+            crash("invalid char '%c', expected ',' or ']'", c);
             return;
         case json_arry_elm_next:
             if (is_ws(c)) {
@@ -239,7 +234,7 @@ static void feed(_json_streamer *j, const char c) {
             pop(j, json_arry_elm_next);
             // TODO assert here
             push(j, json_arry_elm);
-            expect_value(j, c);
+            expect_start_value(j, c);
             return;
         case json_obj:
             if (is_ws(c)) {
@@ -255,7 +250,7 @@ static void feed(_json_streamer *j, const char c) {
                 j->sp->str = new_s8(&j->a, JSON_STR_MAX_LEN);
                 return;
             }
-            crash("invalid, expected \" or }");
+            crash("invalid char '%c', expected '\"' or '}'", c);
             return;
         case json_obj_key:
             // TODO: escaping etc.
@@ -278,7 +273,7 @@ static void feed(_json_streamer *j, const char c) {
                 // We now still have the key on the stack one below.
                 return;
             }
-            crash("invalid: expected ':'");
+            crash("invalid char '%c': expected ':'", c);
             return;
         case json_obj_post_colon:
             if (is_ws(c)) {
@@ -287,7 +282,7 @@ static void feed(_json_streamer *j, const char c) {
             pop(j, json_obj_post_colon);
             // TODO assert here
             push(j, json_obj_next);
-            expect_value(j, c);
+            expect_start_value(j, c);
             return;
         case json_obj_next:
             if (is_ws(c)) {
@@ -306,11 +301,11 @@ static void feed(_json_streamer *j, const char c) {
                 pop(j, json_obj);
                 return;
             }
-            crash("invalid, expected , or }");
+            crash("invalid char '%c', expected ',' or '}'", c);
             return;
         case json_null:
             if (c != STR_NULL[j->sp->len]) {
-                crash("invalid char, expected null literal");
+                crash("invalid char '%c', expected 'null' literal", c);
             }
             j->sp->len++;
             if (j->sp->len == STR_NULL_LEN) {
@@ -320,7 +315,7 @@ static void feed(_json_streamer *j, const char c) {
             return;
         case json_true:
             if (c != STR_TRUE[j->sp->len]) {
-                crash("invalid char, expected true literal");
+                crash("invalid char '%c', expected 'true' literal", c);
             }
             j->sp->len++;
             if (j->sp->len == STR_TRUE_LEN) {
@@ -330,7 +325,7 @@ static void feed(_json_streamer *j, const char c) {
             return;
         case json_false:
             if (c != STR_FALSE[j->sp->len]) {
-                crash("invalid char, expected false literal");
+                crash("invalid char '%c', expected 'false' literal", c);
             }
             j->sp->len++;
             if (j->sp->len == STR_FALSE_LEN) {
@@ -348,7 +343,7 @@ static void feed(_json_streamer *j, const char c) {
             frame_buf_putc(j->sp, c);
             return;
         case json_num:
-            if (!is_num(c, false)) {
+            if (!is_num(c)) {
                 emit(j);
                 pop(j, json_num);
 
@@ -358,12 +353,12 @@ static void feed(_json_streamer *j, const char c) {
 
                 return;
             }
-            // TODO: be more strict about what we accept.
+            // TODO: do proper parsing instead of just accepting everything and leaving the work to
+            // stdlib.
             frame_buf_putc(j->sp, c);
             return;
         default:
-            printf("unhandled %c", j->sp->type);
-            crash("feed: unhandled");
+            crash("feed(): unhandled type %d", j->sp->type);
     }
 }
 
