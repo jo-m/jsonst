@@ -1,11 +1,6 @@
 #include "util.h"
 
-#include <assert.h>
-
 arena new_arena(uint8_t *mem, const ptrdiff_t memsz) {
-    assert(mem != NULL);
-    assert(memsz != 0);
-
     arena a = {0};
     a.beg = mem;
     a.end = a.beg ? a.beg + memsz : 0;

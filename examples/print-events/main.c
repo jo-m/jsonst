@@ -2,45 +2,47 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "src/jsons.h"
-#include "src/jsons_helpers.h"
+#include "src/jsonst.h"
+#include "src/jsonst_helpers.h"
 
 static const char *doc = "{ \"aa \\\\ ää  \\\" \\r \\n aa\":123 }";
 
-void cb(const jsons_value *value, const jsons_path *path) {
+void cb(const jsonst_value *value, const jsonst_path *path) {
     switch (value->type) {
-        case json_null:
-            printf("jsons_event_cb(%p, %s)\n", (void *)path, json_type_to_str(value->type));
+        case jsonst_null:
+            printf("jsonst_value_cb(%p, %s)\n", (void *)path, jsonst_type_to_str(value->type));
             break;
-        case json_true:
-            printf("jsons_event_cb(%p, %s)\n", (void *)path, json_type_to_str(value->type));
+        case jsonst_true:
+            printf("jsonst_value_cb(%p, %s)\n", (void *)path, jsonst_type_to_str(value->type));
             break;
-        case json_false:
-            printf("jsons_event_cb(%p, %s)\n", (void *)path, json_type_to_str(value->type));
+        case jsonst_false:
+            printf("jsonst_value_cb(%p, %s)\n", (void *)path, jsonst_type_to_str(value->type));
             break;
-        case json_num:
-            printf("jsons_event_cb(%p, %s, %f)\n", (void *)path, json_type_to_str(value->type),
+        case jsonst_num:
+            printf("jsonst_value_cb(%p, %s, %f)\n", (void *)path, jsonst_type_to_str(value->type),
                    value->val_num);
             break;
-        case json_str:
-            printf("jsons_event_cb(%p, %s, '%.*s')\n", (void *)path, json_type_to_str(value->type),
-                   (int)value->val_str.str_len, value->val_str.str);
+        case jsonst_str:
+            printf("jsonst_value_cb(%p, %s, '%.*s')\n", (void *)path,
+                   jsonst_type_to_str(value->type), (int)value->val_str.str_len,
+                   value->val_str.str);
             break;
-        case json_obj_name:
-            printf("jsons_event_cb(%p, %s, k='%.*s')\n", (void *)path,
-                   json_type_to_str(value->type), (int)value->val_str.str_len, value->val_str.str);
+        case jsonst_obj_name:
+            printf("jsonst_value_cb(%p, %s, k='%.*s')\n", (void *)path,
+                   jsonst_type_to_str(value->type), (int)value->val_str.str_len,
+                   value->val_str.str);
             break;
-        case json_arry:
-            printf("jsons_event_cb(%p, %s, [)\n", (void *)path, json_type_to_str(value->type));
+        case jsonst_arry:
+            printf("jsonst_value_cb(%p, %s, [)\n", (void *)path, jsonst_type_to_str(value->type));
             break;
-        case json_arry_end:
-            printf("jsons_event_cb(%p, %s, ])\n", (void *)path, json_type_to_str(value->type));
+        case jsonst_arry_end:
+            printf("jsonst_value_cb(%p, %s, ])\n", (void *)path, jsonst_type_to_str(value->type));
             break;
-        case json_obj:
-            printf("jsons_event_cb(%p, %s, {)\n", (void *)path, json_type_to_str(value->type));
+        case jsonst_obj:
+            printf("jsonst_value_cb(%p, %s, {)\n", (void *)path, jsonst_type_to_str(value->type));
             break;
-        case json_obj_end:
-            printf("jsons_event_cb(%p, %s, })\n", (void *)path, json_type_to_str(value->type));
+        case jsonst_obj_end:
+            printf("jsonst_value_cb(%p, %s, })\n", (void *)path, jsonst_type_to_str(value->type));
             break;
         default:
             printf("unhandled %d\n", (int)value->type);
@@ -53,11 +55,11 @@ int main(void) {
     void *mem = malloc(memsz);
     assert(mem != NULL);
 
-    json_streamer j = new_json_streamer(mem, memsz, cb);
+    jsonst j = new_jsonst(mem, memsz, cb);
     for (ptrdiff_t i = 0; doc[i] != 0; i++) {
-        json_streamer_feed(j, doc[i]);
+        jsonst_feed(j, doc[i]);
     }
-    json_streamer_feed(j, EOF);
+    jsonst_feed(j, EOF);
 
     free(mem);
     return 0;

@@ -1,13 +1,13 @@
 #include <gtest/gtest.h>
 
 extern "C" {
-#include "jsons.h"
-#include "jsons_helpers.h"
+#include "jsonst.h"
+#include "jsonst_helpers.h"
 }
 
-void cb(const jsons_value *value, const jsons_path *path) {
-    printf("jsons_event_cb(%p, %d, %s)\n", (void *)path, value->type,
-           json_type_to_str(value->type));
+void cb(const jsonst_value *value, const jsonst_path *path) {
+    printf("jsonst_value_cb(%p, %d, %s)\n", (void *)path, value->type,
+           jsonst_type_to_str(value->type));
 }
 
 void parse_doc(const std::string doc) {
@@ -15,30 +15,30 @@ void parse_doc(const std::string doc) {
     uint8_t *mem = new uint8_t[memsz];
     EXPECT_NE(mem, nullptr);
 
-    json_streamer j = new_json_streamer(mem, memsz, cb);
+    jsonst j = new_jsonst(mem, memsz, cb);
     EXPECT_NE(j, nullptr);
 
     for (ptrdiff_t i = 0; doc[i] != 0; i++) {
-        json_streamer_feed(j, doc[i]);
+        jsonst_feed(j, doc[i]);
     }
-    json_streamer_feed(j, EOF);
+    jsonst_feed(j, EOF);
 
     free(mem);
 }
 
-TEST(JsonsTest, Null) {
+TEST(JsonstTest, Null) {
     parse_doc(" null");
     parse_doc("  null ");
 }
 
-TEST(JsonsTest, Bool) {
+TEST(JsonstTest, Bool) {
     parse_doc("true");
     parse_doc(" true ");
     parse_doc("false");
     parse_doc(" false ");
 }
 
-TEST(JsonsTest, Num) {
+TEST(JsonstTest, Num) {
     parse_doc("0");
     parse_doc("0 ");
     parse_doc("1");
@@ -56,14 +56,14 @@ TEST(JsonsTest, Num) {
     parse_doc(" 0.1234 ");
 }
 
-TEST(JsonsTest, Str) {
+TEST(JsonstTest, Str) {
     parse_doc("\"\"");
     parse_doc("\"a\"");
     parse_doc("\"a\" ");
     parse_doc(" \"a\" ");
 }
 
-TEST(JsonsTest, StrUTF8) {
+TEST(JsonstTest, StrUTF8) {
     parse_doc(" \"Aä\" ");
     parse_doc(" \"Aäö8ü-\" ");
     parse_doc("\"Aä\"");
@@ -72,14 +72,14 @@ TEST(JsonsTest, StrUTF8) {
     parse_doc("\"aa𐀀aa\"");
 }
 
-TEST(JsonsTest, StrEscape) {
+TEST(JsonstTest, StrEscape) {
     parse_doc("\"aa \\\\ \\\" \\r \\n aa\"");
     parse_doc("\" aa \\u1234 aa \"");
     parse_doc("\" \\u1a3C \\uFFFF \"");
     parse_doc("\" \\uD834\\uDD1E \"");  // UTF-16 surrogate pair.
 }
 
-TEST(JsonsTest, ObjKey) {
+TEST(JsonstTest, ObjKey) {
     parse_doc("{ \"Aä\" :123 }");
     parse_doc("{ \"Aäö8ü-\" :123 }");
     parse_doc("{ \"Aä\" :123 }");
@@ -91,7 +91,7 @@ TEST(JsonsTest, ObjKey) {
     parse_doc("{ \" \\uD834\\uDD1E \":123 }");
 }
 
-TEST(JsonsTest, ListSimple) {
+TEST(JsonstTest, ListSimple) {
     parse_doc("[]");
     parse_doc("[ ]");
     parse_doc("[  ]");
@@ -105,12 +105,12 @@ TEST(JsonsTest, ListSimple) {
     parse_doc(" [ true, false , null  ,[]  , 123, 123,true ] ");
 }
 
-TEST(JsonsTest, ListNested) {
+TEST(JsonstTest, ListNested) {
     parse_doc("[[[],[[[[]]]], []]]");
     parse_doc("[[[ ],[[[ [] ],[], [],[[ []]], [] ]], []]]");
 }
 
-TEST(JsonsTest, ObjectSimple) {
+TEST(JsonstTest, ObjectSimple) {
     parse_doc("{}");
     parse_doc("{ }");
     parse_doc("{  }");
@@ -120,6 +120,6 @@ TEST(JsonsTest, ObjectSimple) {
     parse_doc("{ \"ky\": 123 }  ");
 }
 
-TEST(JsonsTest, ObjectNested) {
+TEST(JsonstTest, ObjectNested) {
     parse_doc("{ \"1\":{\"1\":{}, \"2\":{\"1\":{}}}, \"2\":{}, \"3\":{} }");
 }

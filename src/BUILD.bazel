@@ -7,26 +7,26 @@ cc_library(
 )
 
 cc_library(
-    name = "jsons_helpers",
-    srcs = ["jsons_helpers.c"],
-    hdrs = ["jsons_helpers.h"],
-    deps = [":jsons"],
+    name = "jsonst_helpers",
+    srcs = ["jsonst_helpers.c"],
+    hdrs = ["jsonst_helpers.h"],
+    deps = [":jsonst"],
     visibility = ["//visibility:public"],
 )
 
 cc_library(
-    name = "jsons",
-    srcs = ["jsons.c","jsons_impl.h"],
-    hdrs = ["jsons.h"],
+    name = "jsonst",
+    srcs = ["jsonst.c","jsonst_impl.h"],
+    hdrs = ["jsonst.h"],
     deps = [":util"],
     visibility = ["//visibility:public"],
 )
 
 cc_test(
-  name = "jsons_test",
+  name = "jsonst_test",
   size = "small",
-  srcs = ["jsons_test.cc"],
-  deps = ["@com_google_googletest//:gtest_main", ":jsons", ":jsons_helpers"],
+  srcs = ["jsonst_test.cc"],
+  deps = ["@com_google_googletest//:gtest_main", ":jsonst", ":jsonst_helpers"],
 )
 
 cc_test(
