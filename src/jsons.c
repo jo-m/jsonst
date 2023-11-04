@@ -356,16 +356,6 @@ static void feed(_json_streamer *j, const char c) {
             }
             crash("invalid char '%c', expected '\"' or '}'", c);
             return;
-        case json_obj_key:
-            // TODO: escaping etc.
-            if (c == '"') {
-                emit(j, 0);
-                push(j, (int)json_obj_post_key);
-                // We leave the key on the stack for now.
-                return;
-            }
-            frame_buf_putc(j->sp, c);
-            return;
         case json_obj_post_key:
             if (is_ws(c)) {
                 return;
@@ -438,13 +428,20 @@ static void feed(_json_streamer *j, const char c) {
             }
             return;
         case json_str:
+        case json_obj_key:
             if (c == '"') {
+                if (j->sp->type == json_str) {
+                    emit(j, 0);
+                    pop(j, json_str);
+                    return;
+                }
+                assert(j->sp->type == json_obj_key);
                 emit(j, 0);
-                pop(j, json_str);
+                push(j, (int)json_obj_post_key);
+                // We leave the key on the stack for now.
                 return;
             }
             if (c == '\\') {
-                // TODO: handle escape.
                 push(j, (int)json_str_escp);
                 return;
             }
@@ -488,7 +485,7 @@ static void feed(_json_streamer *j, const char c) {
             const char unquoted = is_quotable(c);
             if (unquoted != 0) {
                 // Write to underlying string buffer.
-                assert(j->sp->prev->type == json_str);
+                assert(j->sp->prev->type == json_str || j->sp->prev->type == json_obj_key);
                 frame_buf_putc(j->sp->prev, unquoted);
                 pop(j, (int)json_str_escp);
                 return;
@@ -501,7 +498,7 @@ static void feed(_json_streamer *j, const char c) {
                 crash("invalid utf8-encoding, expected 0b10xxxxxx but got 0x%x", c);
             }
             // Write to underlying string buffer.
-            assert(j->sp->prev->type == json_str);
+            assert(j->sp->prev->type == json_str || j->sp->prev->type == json_obj_key);
             frame_buf_putc(j->sp->prev, c);
 
             j->sp->len--;
@@ -511,7 +508,7 @@ static void feed(_json_streamer *j, const char c) {
             return;
         case json_str_escp_uhex:
             assert(j->sp->prev->type == json_str_escp);
-            assert(j->sp->prev->prev->type == json_str);
+            assert(j->sp->prev->prev->type == json_str || j->sp->prev->prev->type == json_obj_key);
             if (!is_xdigit(c)) {
                 crash("expected hex digit but got '%c'", c);
                 return;
@@ -535,7 +532,8 @@ static void feed(_json_streamer *j, const char c) {
         case json_str_escp_uhex_utf16:
             assert(j->sp->prev->type == json_str_escp_uhex);
             assert(j->sp->prev->prev->type == json_str_escp);
-            assert(j->sp->prev->prev->prev->type == json_str);
+            assert(j->sp->prev->prev->prev->type == json_str ||
+                   j->sp->prev->prev->prev->type == json_obj_key);
 
             if (j->sp->len == -2 && c == '\\') {
                 j->sp->len++;

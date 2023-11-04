@@ -5,9 +5,9 @@ extern "C" {
 #include "jsons_helpers.h"
 }
 
-void cb(const jsons_path *path, const jsons_value *value) {
-    printf("jsons_event_cb(%p, %d, %s)\n", (void *)path, value->type,
-           json_type_to_str(value->type));
+void cb(const jsons_value *value, const jsons_path *path, const jsons_flags flags) {
+    printf("jsons_event_cb(%p, %d, %s, %d)\n", (void *)path, value->type,
+           json_type_to_str(value->type), flags);
 }
 
 void feed_doc(json_streamer j, const std::string doc) {
@@ -79,6 +79,18 @@ TEST(JsonsTest, StrEscape) {
     parse_doc("\" aa \\u1234 aa \"");
     parse_doc("\" \\u1a3C \\uFFFF \"");
     parse_doc("\" \\uD834\\uDD1E \"");  // UTF-16 surrogate pair.
+}
+
+TEST(JsonsTest, ObjKey) {
+    parse_doc("{ \"Aä\" :123 }");
+    parse_doc("{ \"Aäö8ü-\" :123 }");
+    parse_doc("{ \"Aä\" :123 }");
+    parse_doc("{ \"aa߿aa\" :123 }");
+    parse_doc("{ \"aࠀaa\" :123 }");
+    parse_doc("{ \"aa \\\\ \\\" \\r \\n aa\":123 }");
+    parse_doc("{ \" aa \\u1234 aa \":123 }");
+    parse_doc("{ \" \\u1a3C \\uFFFF \":123 }");
+    parse_doc("{ \" \\uD834\\uDD1E \":123 }");
 }
 
 TEST(JsonsTest, ListSimple) {

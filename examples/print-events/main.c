@@ -5,10 +5,7 @@
 #include "src/jsons.h"
 #include "src/jsons_helpers.h"
 
-// static const char *doc = "\"asdäf\\\'\\\"hello\"";
-static const char *doc = "\" \\uD834\\uDD1E \"";
-
-static const char *doc = "{ \"aa\":123 }";
+static const char *doc = "{ \"aa \\\\ ää  \\\" \\r \\n aa\":123 }";
 
 void cb(const jsons_value *value, const jsons_path *path, const jsons_flags flags) {
     switch (value->type) {
