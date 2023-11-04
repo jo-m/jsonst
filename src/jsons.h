@@ -68,7 +68,7 @@ typedef struct _json_streamer* json_streamer;
 // Will not allocate any memory by itself.
 // After the parser is done, simply free(mem).
 // Might return NULL on OOM.
-json_streamer new_json_streamer(char* mem, const ptrdiff_t memsz, jsons_event_cb cb);
+json_streamer new_json_streamer(uint8_t* mem, const ptrdiff_t memsz, jsons_event_cb cb);
 
 // At the end of your input, you MUST call this method once with c = EOF.
 // Otherwise, it might fail to emit tokens at the end.

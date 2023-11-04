@@ -8,7 +8,7 @@ extern "C" {
 
 TEST(UtilTest, NullTerm) {
     const ptrdiff_t memsz = 1024 * 1;
-    char *mem = new char[memsz];
+    uint8_t *mem = new uint8_t[memsz];
     EXPECT_NE(mem, nullptr);
 
     arena a = new_arena(mem, memsz);

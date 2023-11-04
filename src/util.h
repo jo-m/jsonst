@@ -11,12 +11,11 @@
 
 // Inspired by https://nullprogram.com/blog/2023/09/27/.
 typedef struct {
-    // TODO: maybe make uint8_t
-    char *beg;
-    char *end;
+    uint8_t *beg;
+    uint8_t *end;
 } arena;
 
-arena new_arena(char *mem, const ptrdiff_t memsz);
+arena new_arena(uint8_t *mem, const ptrdiff_t memsz);
 
 // Returns NULL on OOM.
 __attribute((malloc, alloc_size(2, 4), alloc_align(3))) void *alloc(arena *a, ptrdiff_t size,

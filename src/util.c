@@ -2,7 +2,7 @@
 
 #include <assert.h>
 
-arena new_arena(char *mem, const ptrdiff_t memsz) {
+arena new_arena(uint8_t *mem, const ptrdiff_t memsz) {
     assert(mem != NULL);
     assert(memsz != 0);
 
@@ -23,7 +23,7 @@ __attribute((malloc, alloc_size(2, 4), alloc_align(3))) void *alloc(arena *a, pt
         return NULL;
     }
     ptrdiff_t total = size * count;
-    char *p = a->beg + padding;
+    uint8_t *p = a->beg + padding;
     a->beg += padding + total;
 
     // memset(p, 0, total)
@@ -35,7 +35,7 @@ __attribute((malloc, alloc_size(2, 4), alloc_align(3))) void *alloc(arena *a, pt
 
 arena new_scratch(arena *a, const ptrdiff_t cap) {
     arena scratch = {0};
-    scratch.beg = new (a, char, cap, 0);
+    scratch.beg = new (a, uint8_t, cap, 0);
     if (scratch.beg != NULL) {
         scratch.end = scratch.beg + cap;
     }

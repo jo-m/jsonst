@@ -12,7 +12,7 @@ void cb(const jsons_value *value, const jsons_path *path) {
 
 void parse_doc(const std::string doc) {
     const ptrdiff_t memsz = 1024 * 8;
-    char *mem = new char[memsz];
+    uint8_t *mem = new uint8_t[memsz];
     EXPECT_NE(mem, nullptr);
 
     json_streamer j = new_json_streamer(mem, memsz, cb);

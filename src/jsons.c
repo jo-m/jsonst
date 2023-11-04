@@ -48,7 +48,7 @@ static void frame_buf_putc(frame *f, const char c) {
     f->len++;
 }
 
-_json_streamer *new__json_streamer(char *mem, const ptrdiff_t memsz, jsons_event_cb cb) {
+_json_streamer *new__json_streamer(uint8_t *mem, const ptrdiff_t memsz, jsons_event_cb cb) {
     arena a = new_arena(mem, memsz);
     json_streamer r = new (&a, _json_streamer, 1, 0);
     if (r == NULL) {
@@ -64,7 +64,7 @@ _json_streamer *new__json_streamer(char *mem, const ptrdiff_t memsz, jsons_event
     return r;
 }
 
-json_streamer new_json_streamer(char *mem, const ptrdiff_t memsz, jsons_event_cb cb) {
+json_streamer new_json_streamer(uint8_t *mem, const ptrdiff_t memsz, jsons_event_cb cb) {
     return new__json_streamer(mem, memsz, cb);
 }
 
