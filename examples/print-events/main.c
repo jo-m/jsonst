@@ -8,34 +8,43 @@
 // static const char *doc = "\"asdäf\\\'\\\"hello\"";
 static const char *doc = "\" \\uD834\\uDD1E \"";
 
-void cb(const jsons_path *path, const jsons_value *value) {
+static const char *doc = "{ \"aa\":123 }";
+
+void cb(const jsons_value *value, const jsons_path *path, const jsons_flags flags) {
     switch (value->type) {
         case json_null:
-            printf("jsons_event_cb(%p, %s)\n", (void *)path, json_type_to_str(value->type));
+            printf("jsons_event_cb(%p, %s, %d)\n", (void *)path, json_type_to_str(value->type),
+                   flags);
             break;
         case json_true:
-            printf("jsons_event_cb(%p, %s)\n", (void *)path, json_type_to_str(value->type));
+            printf("jsons_event_cb(%p, %s, %d)\n", (void *)path, json_type_to_str(value->type),
+                   flags);
             break;
         case json_false:
-            printf("jsons_event_cb(%p, %s)\n", (void *)path, json_type_to_str(value->type));
+            printf("jsons_event_cb(%p, %s, %d)\n", (void *)path, json_type_to_str(value->type),
+                   flags);
             break;
         case json_num:
-            printf("jsons_event_cb(%p, %s, %f)\n", (void *)path, json_type_to_str(value->type),
-                   value->val_num);
+            printf("jsons_event_cb(%p, %s, %f, %d)\n", (void *)path, json_type_to_str(value->type),
+                   value->val_num, flags);
             break;
         case json_str:
-            printf("jsons_event_cb(%p, %s, '%.*s')\n", (void *)path, json_type_to_str(value->type),
-                   (int)value->val_str.str_len, value->val_str.str);
+            printf("jsons_event_cb(%p, %s, '%.*s', %d)\n", (void *)path,
+                   json_type_to_str(value->type), (int)value->val_str.str_len, value->val_str.str,
+                   flags);
             break;
         case json_obj_key:
-            printf("jsons_event_cb(%p, %s, k='%.*s')\n", (void *)path,
-                   json_type_to_str(value->type), (int)value->val_str.str_len, value->val_str.str);
+            printf("jsons_event_cb(%p, %s, k='%.*s', %d)\n", (void *)path,
+                   json_type_to_str(value->type), (int)value->val_str.str_len, value->val_str.str,
+                   flags);
             break;
         case json_arry:
-            printf("jsons_event_cb(%p, %s, [])\n", (void *)path, json_type_to_str(value->type));
+            printf("jsons_event_cb(%p, %s, [], %d)\n", (void *)path, json_type_to_str(value->type),
+                   flags);
             break;
         case json_obj:
-            printf("jsons_event_cb(%p, %s, {})\n", (void *)path, json_type_to_str(value->type));
+            printf("jsons_event_cb(%p, %s, {}, %d)\n", (void *)path, json_type_to_str(value->type),
+                   flags);
             break;
         default:
             printf("unhandled %d", (int)value->type);

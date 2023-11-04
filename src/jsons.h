@@ -36,6 +36,11 @@ typedef enum {
     json_str_escp_uhex_utf16 = '6',
 } json_internal_states;
 
+typedef enum jsons_flags {
+    jsons_start = 1 << 0,
+    jsons_end = 1 << 1,
+} jsons_flags;
+
 typedef struct jsons_path jsons_path;
 typedef struct jsons_path {
     // Valid options are only json_arry, json_obj.
@@ -71,7 +76,8 @@ typedef struct {
 } jsons_value;
 
 // Callback signature.
-typedef void (*jsons_event_cb)(const jsons_path* path, const jsons_value* value);
+typedef void (*jsons_event_cb)(const jsons_value* value, const jsons_path* path,
+                               const jsons_flags flags);
 
 typedef struct _json_streamer* json_streamer;
 
