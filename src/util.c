@@ -25,6 +25,13 @@ __attribute((malloc, alloc_size(2, 4), alloc_align(3))) void *alloc(arena *a, pt
     for (int i = 0; i < total; i++) {
         p[i] = 0;
     }
+
+#ifndef NDEBUG
+    for (uint8_t *m = a->beg; m <= a->end; m++) {
+        *m = '~';
+    }
+#endif
+
     return p;
 }
 
