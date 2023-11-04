@@ -7,7 +7,6 @@
 #include "jsonst_impl.h"
 #include "util.h"
 
-// TODO: remove
 static void visualize_stack(const frame *top) {
     if (top == NULL) {
         return;
@@ -95,8 +94,8 @@ static void emit(_jsonst *j, const jsonst_type /* or jsonst_internal_states */ t
             }
         } break;
         case jsonst_str:
-        case jsonst_obj_name:
-            assert(j->sp->type == jsonst_str || j->sp->type == jsonst_obj_name);
+        case jsonst_obj_key:
+            assert(j->sp->type == jsonst_str || j->sp->type == jsonst_obj_key);
             v->val_str.str = j->sp->str.buf;
             v->val_str.str_len = j->sp->str.len;
             break;
@@ -105,12 +104,45 @@ static void emit(_jsonst *j, const jsonst_type /* or jsonst_internal_states */ t
             break;
     }
 
-    jsonst_path *p = new (&scratch, jsonst_path, 1, 0);
-    if (p == NULL) {
-        crash("OOM");
+    jsonst_path *p_first = NULL, *p_last = NULL;
+    // TODO: actually fill in arry_ix for arrays
+    for (const frame *f = j->sp; f != NULL; f = f->prev) {
+        switch (f->type) {
+            case jsonst_arry_elm:
+            case jsonst_obj_key:
+                break;
+            default:
+                continue;
+        }
+
+        jsonst_path *p_new = new (&scratch, jsonst_path, 1, 0);
+        if (p_new == NULL) {
+            crash("OOM");
+        }
+        p_new->type = f->type;
+
+        switch (f->type) {
+            case jsonst_arry_elm:
+                assert(f->prev->type == jsonst_arry);
+                p_new->props.arry_ix = f->prev->len;
+                break;
+            case jsonst_obj_key:
+                p_new->props.obj_key.str = f->str.buf;
+                p_new->props.obj_key.str_len = f->str.len;
+                break;
+        }
+
+        if (p_last == NULL) {
+            p_last = p_new;
+            p_first = p_new;
+        } else {
+            p_new->next = p_first;
+            p_first->prev = p_new;
+            p_first = p_new;
+        }
     }
 
-    j->cb(v, p);
+    j->cb(v, p_first, p_last);
 }
 
 static bool is_digit(const char c) { return c >= '0' && c <= '9'; }
@@ -351,6 +383,7 @@ static void feed(_jsonst *j, const char c) {
             if (c == ',') {
                 pop(j, jsonst_arry_elm);
                 assert(j->sp->type == jsonst_arry);
+                j->sp->len++;
                 push(j, (int)jsonst_arry_elm_next);
                 return;
             }
@@ -381,7 +414,7 @@ static void feed(_jsonst *j, const char c) {
                 return;
             }
             if (c == '"') {
-                push(j, jsonst_obj_name);
+                push(j, jsonst_obj_key);
                 j->sp->str = new_s8(&j->sp->a, STR_ALLOC);
                 if (j->sp->str.buf == NULL) {
                     crash("OOM");
@@ -396,7 +429,7 @@ static void feed(_jsonst *j, const char c) {
             }
             if (c == ':') {
                 pop(j, (int)jsonst_obj_post_name);
-                assert(j->sp->type == jsonst_obj_name);
+                assert(j->sp->type == jsonst_obj_key);
                 push(j, (int)jsonst_obj_post_sep);
                 // We now still have the key on the stack one below.
                 return;
@@ -408,7 +441,7 @@ static void feed(_jsonst *j, const char c) {
                 return;
             }
             pop(j, (int)jsonst_obj_post_sep);
-            assert(j->sp->type == jsonst_obj_name);
+            assert(j->sp->type == jsonst_obj_key);
             push(j, (int)jsonst_obj_next);
             expect_start_value(j, c);
             return;
@@ -418,13 +451,13 @@ static void feed(_jsonst *j, const char c) {
             }
             if (c == ',') {
                 pop(j, (int)jsonst_obj_next);
-                pop(j, jsonst_obj_name);
+                pop(j, jsonst_obj_key);
                 assert(j->sp->type == jsonst_obj);
                 return;
             }
             if (c == '}') {
                 pop(j, (int)jsonst_obj_next);
-                pop(j, jsonst_obj_name);
+                pop(j, jsonst_obj_key);
                 emit(j, jsonst_obj_end);
                 pop(j, jsonst_obj);
                 return;
@@ -462,15 +495,15 @@ static void feed(_jsonst *j, const char c) {
             }
             return;
         case jsonst_str:
-        case jsonst_obj_name:
+        case jsonst_obj_key:
             if (c == '"') {
                 if (j->sp->type == jsonst_str) {
                     emit(j, 0);
                     pop(j, jsonst_str);
                     return;
                 }
-                assert(j->sp->type == jsonst_obj_name);
-                emit(j, jsonst_obj_name);
+                assert(j->sp->type == jsonst_obj_key);
+                emit(j, jsonst_obj_key);
                 push(j, (int)jsonst_obj_post_name);
                 // We leave the key on the stack for now.
                 return;
@@ -522,7 +555,7 @@ static void feed(_jsonst *j, const char c) {
             const char unquoted = is_quotable(c);
             if (unquoted != 0) {
                 // Write to underlying string buffer.
-                assert(j->sp->prev->type == jsonst_str || j->sp->prev->type == jsonst_obj_name);
+                assert(j->sp->prev->type == jsonst_str || j->sp->prev->type == jsonst_obj_key);
                 frame_buf_putc(j->sp->prev, unquoted);
                 pop(j, (int)jsonst_str_escp);
                 return;
@@ -535,7 +568,7 @@ static void feed(_jsonst *j, const char c) {
                 crash("invalid utf8-encoding, expected 0b10xxxxxx but got 0x%x", c);
             }
             // Write to underlying string buffer.
-            assert(j->sp->prev->type == jsonst_str || j->sp->prev->type == jsonst_obj_name);
+            assert(j->sp->prev->type == jsonst_str || j->sp->prev->type == jsonst_obj_key);
             frame_buf_putc(j->sp->prev, c);
 
             j->sp->len--;
@@ -546,7 +579,7 @@ static void feed(_jsonst *j, const char c) {
         case jsonst_str_escp_uhex:
             assert(j->sp->prev->type == jsonst_str_escp);
             assert(j->sp->prev->prev->type == jsonst_str ||
-                   j->sp->prev->prev->type == jsonst_obj_name);
+                   j->sp->prev->prev->type == jsonst_obj_key);
             if (!is_xdigit(c)) {
                 crash("expected hex digit but got '%c'", c);
                 return;
@@ -574,7 +607,7 @@ static void feed(_jsonst *j, const char c) {
             assert(j->sp->prev->type == jsonst_str_escp_uhex);
             assert(j->sp->prev->prev->type == jsonst_str_escp);
             assert(j->sp->prev->prev->prev->type == jsonst_str ||
-                   j->sp->prev->prev->prev->type == jsonst_obj_name);
+                   j->sp->prev->prev->prev->type == jsonst_obj_key);
 
             if (j->sp->len == -2 && c == '\\') {
                 j->sp->len++;

@@ -5,9 +5,9 @@ extern "C" {
 #include "jsonst_helpers.h"
 }
 
-void cb(const jsonst_value *value, const jsonst_path *path) {
-    printf("jsonst_value_cb(%p, %d, %s)\n", (void *)path, value->type,
-           jsonst_type_to_str(value->type));
+void cb(const jsonst_value *value, const jsonst_path __attribute((unused)) * p_first,
+        const jsonst_path __attribute((unused)) * p_last) {
+    printf("jsonst_value_cb(%d, %s)\n", value->type, jsonst_type_to_str(value->type));
 }
 
 void parse_doc(const std::string doc) {

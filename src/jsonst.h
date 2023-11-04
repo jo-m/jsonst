@@ -17,25 +17,25 @@ typedef enum {
     jsonst_arry_end = ']',
 
     jsonst_obj = '{',
-    jsonst_obj_name = 'k',
+    jsonst_obj_key = 'k',
     jsonst_obj_end = '}',
 } jsonst_type;
 
 typedef struct jsonst_path jsonst_path;
 typedef struct jsonst_path {
-    // Valid options are only jsonst_arry, jsonst_obj.
+    // Valid options are only jsonst_arry_elm, jsonst_obj_key.
     jsonst_type type;
 
-    // Will be NULL for last entry.
+    // Will be NULL for last path segment.
     jsonst_path* next;
-    // Will be NULL for first entry.
+    // Will be NULL for first path segment.
     jsonst_path* prev;
 
     union {
-        // Set if type == jsonst_arry.
+        // Set if type == jsonst_arry_elm.
         uint32_t arry_ix;
 
-        // Set if type == jsonst_obj.
+        // Set if type == jsonst_obj_key.
         struct {
             char* str;
             ptrdiff_t str_len;
@@ -59,7 +59,8 @@ typedef struct {
 } jsonst_value;
 
 // Callback signature.
-typedef void (*jsonst_value_cb)(const jsonst_value* value, const jsonst_path* path);
+typedef void (*jsonst_value_cb)(const jsonst_value* value, const jsonst_path* p_first,
+                                const jsonst_path* p_last);
 
 // Opaque handle.
 typedef struct _jsonst* jsonst;
