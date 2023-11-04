@@ -4,20 +4,27 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "arena.h"
-
 #define sizeof(x) (ptrdiff_t)sizeof(x)
 #define alignof(x) (ptrdiff_t) _Alignof(x)
 #define countof(a) (sizeof(a) / sizeof(*(a)))
 #define lengthof(s) (countof(s) - 1)
 
+// Inspired by https://nullprogram.com/blog/2023/09/27/.
+typedef struct {
+    // TODO: maybe make uint8_t
+    char *beg;
+    char *end;
+} arena;
+
+arena new_arena(char *mem, const ptrdiff_t memsz);
+
+// Returns NULL on OOM.
 __attribute((malloc, alloc_size(2, 4), alloc_align(3))) void *alloc(arena *a, ptrdiff_t size,
                                                                     ptrdiff_t align,
                                                                     ptrdiff_t count, int32_t flags);
 
+// May return arena.beg = NULL on OOM.
 arena new_scratch(arena *a, ptrdiff_t cap);
-
-arena new_scratch_div(arena *a, ptrdiff_t div);
 
 // clang-format off
 #define new(a, t, n, f)(t *) alloc(a, sizeof(t), _Alignof(t), n, f)
@@ -35,4 +42,5 @@ typedef struct {
     ptrdiff_t len;
 } s8;
 
+// May return s8.buf = NULL on OOM.
 s8 new_s8(arena *a, ptrdiff_t len);

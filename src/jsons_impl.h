@@ -9,9 +9,8 @@
 #define STR_FALSE "false"
 #define STR_FALSE_LEN (sizeof(STR_FALSE) - 1)
 
-// TODO: Eventually allow for dynamic realloc.
-#define JSON_STR_MAX_LEN (ptrdiff_t)100
-#define JSON_NUM_STR_MAX_LEN (ptrdiff_t)100
+#define JSON_STR_MAX_LEN (ptrdiff_t)128
+#define JSON_NUM_STR_MAX_LEN (ptrdiff_t)64
 
 // In most places where json_type is used, json_internal_states may also be used.
 // Thus, we need to be careful to no accidentally introduce overlaps.

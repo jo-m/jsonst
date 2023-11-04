@@ -10,22 +10,20 @@ void cb(const jsons_value *value, const jsons_path *path) {
            json_type_to_str(value->type));
 }
 
-void feed_doc(json_streamer j, const std::string doc) {
-    for (const char &c : doc) {
-        json_streamer_feed(j, c);
-    }
-}
+void parse_doc(const std::string doc) {
+    const ptrdiff_t memsz = 1024 * 8;
+    char *mem = new char[memsz];
+    EXPECT_NE(mem, nullptr);
 
-void parse_doc(const char *doc) {
-    arena a = new_arena(3000);
-    EXPECT_NE(a.beg, nullptr);
-
-    json_streamer j = new_json_streamer(a, cb);
+    json_streamer j = new_json_streamer(mem, memsz, cb);
     EXPECT_NE(j, nullptr);
-    feed_doc(j, doc);
 
-    json_streamer_feed(j, 0);
-    arena_free(a);
+    for (ptrdiff_t i = 0; doc[i] != 0; i++) {
+        json_streamer_feed(j, doc[i]);
+    }
+    json_streamer_feed(j, EOF);
+
+    free(mem);
 }
 
 TEST(JsonsTest, Null) {

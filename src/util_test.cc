@@ -6,14 +6,16 @@ extern "C" {
 #undef alignof
 }
 
-#define ARENA_SIZE 1000
-
 TEST(UtilTest, NullTerm) {
-    arena a = new_arena(ARENA_SIZE);
+    const ptrdiff_t memsz = 1024 * 1;
+    char *mem = new char[memsz];
+    EXPECT_NE(mem, nullptr);
+
+    arena a = new_arena(mem, memsz);
     {
         arena scratch = a;
-        void *arena_fill = alloc(&scratch, 1, alignof(uint8_t), ARENA_SIZE, 0);
-        memset(arena_fill, 'a', ARENA_SIZE);
+        void *arena_fill = alloc(&scratch, 1, alignof(int8_t), memsz, 0);
+        memset(arena_fill, 'a', memsz);
     }
 
     char hello[] = "hello";
@@ -27,5 +29,5 @@ TEST(UtilTest, NullTerm) {
     EXPECT_EQ(s8hello.len, 5);
     EXPECT_EQ(s8hello.buf[s8hello.len], '\0');
 
-    arena_free(a);
+    free(mem);
 }

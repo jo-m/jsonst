@@ -1,17 +1,9 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
-    name = "arena",
-    srcs = ["arena.c"],
-    hdrs = ["arena.h"],
-    visibility = ["//visibility:public"],
-)
-
-cc_library(
     name = "util",
     srcs = ["util.c"],
     hdrs = ["util.h"],
-    deps = [":arena"],
 )
 
 cc_library(
@@ -26,7 +18,7 @@ cc_library(
     name = "jsons",
     srcs = ["jsons.c","jsons_impl.h"],
     hdrs = ["jsons.h"],
-    deps = [":util", ":arena"],
+    deps = [":util"],
     visibility = ["//visibility:public"],
 )
 

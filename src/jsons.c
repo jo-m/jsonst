@@ -31,6 +31,9 @@ static void crash(const char *format, ...) {
 
 static frame *new_frame(arena *a, frame *prev, const json_type /* or json_internal_states */ type) {
     frame *r = new (a, frame, 1, 0);
+    if (r == NULL) {
+        return NULL;
+    }
     r->prev = prev;
     r->type = type;
     return r;
@@ -45,27 +48,33 @@ static void frame_buf_putc(frame *f, const char c) {
     f->len++;
 }
 
-_json_streamer *new__json_streamer(arena a, jsons_event_cb cb) {
+_json_streamer *new__json_streamer(char *mem, const ptrdiff_t memsz, jsons_event_cb cb) {
+    arena a = new_arena(mem, memsz);
     json_streamer r = new (&a, _json_streamer, 1, 0);
+    if (r == NULL) {
+        return NULL;
+    }
     r->a = a;
     assert(cb != NULL);
     r->cb = cb;
     r->sp = new_frame(&r->a, NULL, json_doc);
+    if (r->sp == NULL) {
+        return NULL;
+    }
     return r;
 }
 
-// will take ownership of the arena
-json_streamer new_json_streamer(arena a, jsons_event_cb cb) {
-    _json_streamer *r = new__json_streamer(a, cb);
-    assert(r->sp->type == json_doc);
-    assert(r->sp->prev == NULL);
-    return r;
+json_streamer new_json_streamer(char *mem, const ptrdiff_t memsz, jsons_event_cb cb) {
+    return new__json_streamer(mem, memsz, cb);
 }
 
 static void emit(_json_streamer *j, const json_type /* or json_internal_states */ type) {
     arena scratch = j->a;
 
     jsons_value *v = new (&scratch, jsons_value, 1, 0);
+    if (v == NULL) {
+        crash("OOM");
+    }
     v->type = type;
     switch (type) {
         case json_num: {
@@ -89,6 +98,9 @@ static void emit(_json_streamer *j, const json_type /* or json_internal_states *
     }
 
     jsons_path *p = new (&scratch, jsons_path, 1, 0);
+    if (p == NULL) {
+        crash("OOM");
+    }
 
     j->cb(v, p);
 }
@@ -198,6 +210,9 @@ static void push(_json_streamer *j, const json_type /* or json_internal_states *
     visualize_stack(j->sp);
     printf("push('%c')\n", type);
     j->sp = new_frame(&(j->a), j->sp, type);
+    if (j->sp == NULL) {
+        crash("OOM");
+    }
 }
 
 static void pop(_json_streamer *j, const json_type /* or json_internal_states */ expect_type) {
@@ -242,11 +257,17 @@ static void expect_start_value(_json_streamer *j, const char c) {
         case '"':
             push(j, json_str);
             j->sp->str = new_s8(&j->a, JSON_STR_MAX_LEN);
+            if (j->sp->str.buf == NULL) {
+                crash("OOM");
+            }
             return;
         default:
             if (is_digit(c) || c == '-') {
                 push(j, json_num);
                 j->sp->str = new_s8(&j->a, JSON_NUM_STR_MAX_LEN);
+                if (j->sp->str.buf == NULL) {
+                    crash("OOM");
+                }
                 frame_buf_putc(j->sp, c);
                 return;
             }
@@ -281,7 +302,7 @@ static void feed(_json_streamer *j, const char c) {
     printf("feed(\"%c\" = %d)\n", c, c);
 
     // EOF, with special treatment for numbers (which have no delimiters themselves).
-    if (c == 0 && j->sp->type != json_num) {
+    if (c == EOF && j->sp->type != json_num) {
         if (j->sp->type == json_doc) {
             j->sp = NULL;
         }
@@ -354,6 +375,9 @@ static void feed(_json_streamer *j, const char c) {
             if (c == '"') {
                 push(j, json_obj_name);
                 j->sp->str = new_s8(&j->a, JSON_STR_MAX_LEN);
+                if (j->sp->str.buf == NULL) {
+                    crash("OOM");
+                }
                 return;
             }
             crash("invalid char '%c', expected '\"' or '}'", c);
@@ -482,6 +506,9 @@ static void feed(_json_streamer *j, const char c) {
             if (c == 'u') {
                 push(j, (int)json_str_escp_uhex);
                 j->sp->str = new_s8(&j->a, 4);
+                if (j->sp->str.buf == NULL) {
+                    crash("OOM");
+                }
                 return;
             }
             const char unquoted = is_quotable(c);
@@ -524,6 +551,9 @@ static void feed(_json_streamer *j, const char c) {
             if (is_utf16_high_surrogate(n)) {
                 push(j, (int)json_str_escp_uhex_utf16);
                 j->sp->str = new_s8(&j->a, 4);
+                if (j->sp->str.buf == NULL) {
+                    crash("OOM");
+                }
                 j->sp->len = -2;  // Eat the \u sequence
             } else {
                 utf8_encode(j->sp->prev->prev, n);

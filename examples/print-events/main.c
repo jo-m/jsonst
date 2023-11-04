@@ -49,15 +49,16 @@ void cb(const jsons_value *value, const jsons_path *path) {
 }
 
 int main(void) {
-    arena a = new_arena(10000);
-    assert(a.beg != NULL);
+    const ptrdiff_t memsz = 1024 * 8;
+    void *mem = malloc(memsz);
+    assert(mem != NULL);
 
-    json_streamer j = new_json_streamer(a, cb);
+    json_streamer j = new_json_streamer(mem, memsz, cb);
     for (ptrdiff_t i = 0; doc[i] != 0; i++) {
         json_streamer_feed(j, doc[i]);
     }
-    json_streamer_feed(j, 0);
+    json_streamer_feed(j, EOF);
 
-    arena_free(a);
+    free(mem);
     return 0;
 }
