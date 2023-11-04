@@ -62,13 +62,14 @@ json_streamer new_json_streamer(arena a, jsons_event_cb cb) {
     return r;
 }
 
-static void emit(_json_streamer *j, const jsons_flags flags) {
+static void emit(_json_streamer *j, const json_type type) {
     arena scratch = j->a;
 
     jsons_value *v = new (&scratch, jsons_value, 1, 0);
-    v->type = j->sp->type;
-    switch (j->sp->type) {
+    v->type = type;
+    switch (type) {
         case json_num: {
+            assert(j->sp->type == json_num);
             char *endptr;
             v->val_num = strtod(j->sp->str.buf, &endptr);
             if (endptr != j->sp->str.buf + j->sp->len) {
@@ -78,17 +79,19 @@ static void emit(_json_streamer *j, const jsons_flags flags) {
         } break;
         case json_str:
         case json_obj_key:
+            assert(j->sp->type == json_str || j->sp->type == json_obj_key);
             v->val_str.str = j->sp->str.buf;
             v->val_str.str_len = j->sp->str.len;
             break;
-
+        default:
             // Nothing else to do for the others.
+            break;
     }
 
     jsons_path *p = new (&scratch, jsons_path, 1, 0);
     // TODO: fill in path!
 
-    j->cb(v, p, flags);
+    j->cb(v, p);
 }
 
 static bool is_digit(const char c) { return c >= '0' && c <= '9'; }
@@ -219,11 +222,11 @@ static void expect_start_value(_json_streamer *j, const char c) {
     switch (c) {
         case '[':
             push(j, json_arry);
-            emit(j, jsons_start);
+            emit(j, json_arry);
             return;
         case '{':
             push(j, json_obj);
-            emit(j, jsons_start);
+            emit(j, json_obj);
             return;
         case 'n':
             push(j, json_null);
@@ -306,7 +309,7 @@ static void feed(_json_streamer *j, const char c) {
                 return;
             }
             if (c == ']') {
-                emit(j, jsons_end);
+                emit(j, json_arry_end);
                 pop(j, json_arry);
                 return;
             }
@@ -325,7 +328,7 @@ static void feed(_json_streamer *j, const char c) {
             }
             if (c == ']') {
                 pop(j, json_arry_elm);
-                emit(j, jsons_end);
+                emit(j, json_arry_end);
                 pop(j, json_arry);
                 return;
             }
@@ -345,7 +348,7 @@ static void feed(_json_streamer *j, const char c) {
                 return;
             }
             if (c == '}') {
-                emit(j, jsons_end);
+                emit(j, json_obj_end);
                 pop(j, json_obj);
                 return;
             }
@@ -391,7 +394,7 @@ static void feed(_json_streamer *j, const char c) {
             if (c == '}') {
                 pop(j, (int)json_obj_next);
                 pop(j, json_obj_key);
-                emit(j, jsons_end);
+                emit(j, json_obj_end);
                 pop(j, json_obj);
                 return;
             }
@@ -403,7 +406,7 @@ static void feed(_json_streamer *j, const char c) {
             }
             j->sp->len++;
             if (j->sp->len == STR_NULL_LEN) {
-                emit(j, 0);
+                emit(j, json_null);
                 pop(j, json_null);
             }
             return;
@@ -413,7 +416,7 @@ static void feed(_json_streamer *j, const char c) {
             }
             j->sp->len++;
             if (j->sp->len == STR_TRUE_LEN) {
-                emit(j, 0);
+                emit(j, json_true);
                 pop(j, json_true);
             }
             return;
@@ -423,7 +426,7 @@ static void feed(_json_streamer *j, const char c) {
             }
             j->sp->len++;
             if (j->sp->len == STR_FALSE_LEN) {
-                emit(j, 0);
+                emit(j, json_false);
                 pop(j, json_false);
             }
             return;
@@ -436,7 +439,7 @@ static void feed(_json_streamer *j, const char c) {
                     return;
                 }
                 assert(j->sp->type == json_obj_key);
-                emit(j, 0);
+                emit(j, json_obj_key);
                 push(j, (int)json_obj_post_key);
                 // We leave the key on the stack for now.
                 return;
@@ -575,7 +578,7 @@ static void feed(_json_streamer *j, const char c) {
             }
         case json_num:
             if (!is_num(c)) {
-                emit(j, 0);
+                emit(j, json_num);
                 pop(j, json_num);
 
                 // Numbers are the only type delimited by a char which already belongs to the next

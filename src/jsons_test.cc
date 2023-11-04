@@ -5,9 +5,9 @@ extern "C" {
 #include "jsons_helpers.h"
 }
 
-void cb(const jsons_value *value, const jsons_path *path, const jsons_flags flags) {
-    printf("jsons_event_cb(%p, %d, %s, %d)\n", (void *)path, value->type,
-           json_type_to_str(value->type), flags);
+void cb(const jsons_value *value, const jsons_path *path) {
+    printf("jsons_event_cb(%p, %d, %s)\n", (void *)path, value->type,
+           json_type_to_str(value->type));
 }
 
 void feed_doc(json_streamer j, const std::string doc) {

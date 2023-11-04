@@ -15,9 +15,11 @@ typedef enum {
 
     json_arry = '[',
     json_arry_elm = '*',
+    json_arry_end = ']',
 
     json_obj = '{',
     json_obj_key = 'k',
+    json_obj_end = '}',
 } json_type;
 
 // TODO: Move back to jsons_impl.h
@@ -35,11 +37,6 @@ typedef enum {
     json_str_escp_uhex = 'u',
     json_str_escp_uhex_utf16 = '6',
 } json_internal_states;
-
-typedef enum jsons_flags {
-    jsons_start = 1 << 0,
-    jsons_end = 1 << 1,
-} jsons_flags;
 
 typedef struct jsons_path jsons_path;
 typedef struct jsons_path {
@@ -76,8 +73,7 @@ typedef struct {
 } jsons_value;
 
 // Callback signature.
-typedef void (*jsons_event_cb)(const jsons_value* value, const jsons_path* path,
-                               const jsons_flags flags);
+typedef void (*jsons_event_cb)(const jsons_value* value, const jsons_path* path);
 
 typedef struct _json_streamer* json_streamer;
 
