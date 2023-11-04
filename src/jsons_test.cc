@@ -24,8 +24,61 @@ void parse_doc(const char *doc) {
     EXPECT_NE(j, nullptr);
     feed_doc(j, doc);
 
-    json_streamer_terminate(j);
+    json_streamer_feed(j, 0);
     arena_free(a);
+}
+
+TEST(JsonsTest, Null) {
+    parse_doc(" null");
+    parse_doc("  null ");
+}
+
+TEST(JsonsTest, Bool) {
+    parse_doc("true");
+    parse_doc(" true ");
+    parse_doc("false");
+    parse_doc(" false ");
+}
+
+TEST(JsonsTest, Num) {
+    parse_doc("0");
+    parse_doc("0 ");
+    parse_doc("1");
+    parse_doc(" 1");
+    parse_doc(" 1 ");
+    parse_doc("1 ");
+    parse_doc("123");
+    parse_doc("123 ");
+    parse_doc(" 123");
+    parse_doc(" 123 ");
+    parse_doc(" 0.0 ");
+    parse_doc(" 0.1 ");
+    parse_doc(" 0.1234 ");
+    parse_doc(" 1.1234 ");
+    parse_doc(" 0.1234 ");
+}
+
+TEST(JsonsTest, Str) {
+    parse_doc("\"\"");
+    parse_doc("\"a\"");
+    parse_doc("\"a\" ");
+    parse_doc(" \"a\" ");
+}
+
+TEST(JsonsTest, StrUTF8) {
+    parse_doc(" \"Aä\" ");
+    parse_doc(" \"Aäö8ü-\" ");
+    parse_doc("\"Aä\"");
+    parse_doc("\"aa߿aa\"");
+    parse_doc("\"aࠀaa\"");
+    parse_doc("\"aa𐀀aa\"");
+}
+
+TEST(JsonsTest, StrEscape) {
+    parse_doc("\"aa \\\\ \\\" \\r \\n aa\"");
+    parse_doc("\" aa \\u1234 aa \"");
+    parse_doc("\" \\u1a3C \\uFFFF \"");
+    parse_doc("\" \\uD834\\uDD1E \"");  // UTF-16 surrogate pair.
 }
 
 TEST(JsonsTest, ListSimple) {

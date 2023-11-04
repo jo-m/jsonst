@@ -9,6 +9,7 @@ typedef struct {
     char *end;
 } arena;
 
+// TODO: hide this completely, and let user pass in a memory buf + length instead.
 arena new_arena(ptrdiff_t cap);
 
 void arena_free(arena a);

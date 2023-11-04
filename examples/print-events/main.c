@@ -5,7 +5,8 @@
 #include "src/jsons.h"
 #include "src/jsons_helpers.h"
 
-static const char *doc = "{ \"1\":{\"1\":[1,2,3], \"2\":{\"1\":{}}}, \"2\":{}, \"3\":[1,[2]] }";
+// static const char *doc = "\"asdäf\\\'\\\"hello\"";
+static const char *doc = "\" \\uD834\\uDD1E \"";
 
 void cb(const jsons_path *path, const jsons_value *value) {
     switch (value->type) {
@@ -50,7 +51,7 @@ int main(void) {
     for (ptrdiff_t i = 0; doc[i] != 0; i++) {
         json_streamer_feed(j, doc[i]);
     }
-    json_streamer_terminate(j);
+    json_streamer_feed(j, 0);
 
     arena_free(a);
     return 0;

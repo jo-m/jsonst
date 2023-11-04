@@ -1,5 +1,6 @@
 #include "util.h"
 
+#include <stdio.h>   // TODO: remove.
 #include <stdlib.h>  // abort()
 #include <string.h>  // memset()
 
@@ -12,7 +13,9 @@ __attribute((malloc, alloc_size(2, 4), alloc_align(3))) void *alloc(arena *a, pt
     ptrdiff_t avail = a->end - a->beg;
     ptrdiff_t padding = -(uintptr_t)a->beg & (align - 1);
     if (count > (avail - padding) / size) {
-        abort();  // one possible out-of-memory policy
+        // TODO: better OOM policy
+        printf("out of memory\n");
+        abort();
     }
     ptrdiff_t total = size * count;
     char *p = a->beg + padding;

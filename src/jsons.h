@@ -10,7 +10,7 @@ typedef enum {
     json_null = '0',
     json_true = 't',
     json_false = 'f',
-    json_num = '%',  // TODO: expect - or 0-9
+    json_num = 'x',  // TODO: expect - or 0-9
     json_str = 's',
 
     json_arry = '[',
@@ -30,6 +30,10 @@ typedef enum {
     json_obj_post_colon = '_',
     json_obj_next = 'v',
 
+    json_str_utf8 = '8',
+    json_str_escp = '\\',
+    json_str_escp_uhex = 'u',
+    json_str_escp_uhex_utf16 = '6',
 } json_internal_states;
 
 typedef struct jsons_path jsons_path;
@@ -72,8 +76,12 @@ typedef void (*jsons_event_cb)(const jsons_path* path, const jsons_value* value)
 typedef struct _json_streamer* json_streamer;
 
 // will take ownership of the arena
+// TODO: allow configuring some things, e.g. json path on/off.
+// TODO: provide c++ API wrapper.
 json_streamer new_json_streamer(arena a, jsons_event_cb cb);
 
+// At the end of your input, you MUST call this method with c=0
+// to signal EOF to the parser.
 void json_streamer_feed(json_streamer j, char c);
 
-void json_streamer_terminate(json_streamer j);
+// TODO: allow to reset somehow, also consider arena semantics
