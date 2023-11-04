@@ -5,6 +5,7 @@
 
 #include "arena.h"
 
+// TODO: change back to numbers
 typedef enum {
     json_doc = 'd',
     json_null = '0',

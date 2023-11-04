@@ -16,7 +16,7 @@
 typedef struct frame frame;
 struct frame {
     frame *prev;
-    int32_t type;
+    int type;
 
     // State of the frame.
     // Some types will use len separately without str.
