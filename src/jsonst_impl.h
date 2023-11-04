@@ -31,8 +31,9 @@ typedef struct frame frame;
 struct frame {
     frame *prev;
     int type;  // Is a jsonst_type or jsonst_internal_states.
+    arena a;
 
-    // State of the frame.
+    // Processing state, usage depends on type.
     // Some types will use len separately without str.
     s8 str;
     ptrdiff_t len;
@@ -40,7 +41,6 @@ struct frame {
 
 typedef struct _jsonst _jsonst;
 typedef struct _jsonst {
-    arena a;
     jsonst_value_cb cb;
 
     frame *sp;

@@ -31,13 +31,40 @@ static void crash(const char *format, ...) {
 
 static frame *new_frame(arena *a, frame *prev,
                         const jsonst_type /* or jsonst_internal_states */ type) {
-    frame *r = new (a, frame, 1, 0);
-    if (r == NULL) {
+    // Allocate the frame itself on the parent arena.
+    frame *f = new (a, frame, 1, 0);
+    if (f == NULL) {
         return NULL;
     }
-    r->prev = prev;
-    r->type = type;
-    return r;
+
+    f->prev = prev;
+    f->type = type;
+    // We now make a copy.
+    f->a = *a;
+
+    return f;
+}
+
+_jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, jsonst_value_cb cb) {
+    arena a = new_arena(mem, memsz);
+    jsonst j = new (&a, _jsonst, 1, 0);
+    if (j == NULL) {
+        return NULL;
+    }
+
+    assert(cb != NULL);
+    j->cb = cb;
+
+    j->sp = new_frame(&a, NULL, jsonst_doc);
+    if (j->sp == NULL) {
+        return NULL;
+    }
+
+    return j;
+}
+
+jsonst new_jsonst(uint8_t *mem, const ptrdiff_t memsz, jsonst_value_cb cb) {
+    return new__jsonst(mem, memsz, cb);
 }
 
 static void frame_buf_putc(frame *f, const char c) {
@@ -49,28 +76,8 @@ static void frame_buf_putc(frame *f, const char c) {
     f->len++;
 }
 
-_jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, jsonst_value_cb cb) {
-    arena a = new_arena(mem, memsz);
-    jsonst r = new (&a, _jsonst, 1, 0);
-    if (r == NULL) {
-        return NULL;
-    }
-    r->a = a;
-    assert(cb != NULL);
-    r->cb = cb;
-    r->sp = new_frame(&r->a, NULL, jsonst_doc);
-    if (r->sp == NULL) {
-        return NULL;
-    }
-    return r;
-}
-
-jsonst new_jsonst(uint8_t *mem, const ptrdiff_t memsz, jsonst_value_cb cb) {
-    return new__jsonst(mem, memsz, cb);
-}
-
 static void emit(_jsonst *j, const jsonst_type /* or jsonst_internal_states */ type) {
-    arena scratch = j->a;
+    arena scratch = j->sp->a;
 
     jsonst_value *v = new (&scratch, jsonst_value, 1, 0);
     if (v == NULL) {
@@ -210,7 +217,7 @@ static void utf8_encode(frame *f, uint32_t c) {
 static void push(_jsonst *j, const jsonst_type /* or jsonst_internal_states */ type) {
     visualize_stack(j->sp);
     printf("push('%c')\n", type);
-    j->sp = new_frame(&(j->a), j->sp, type);
+    j->sp = new_frame(&(j->sp->a), j->sp, type);
     if (j->sp == NULL) {
         crash("OOM");
     }
@@ -257,7 +264,7 @@ static void expect_start_value(_jsonst *j, const char c) {
             return;
         case '"':
             push(j, jsonst_str);
-            j->sp->str = new_s8(&j->a, STR_ALLOC);
+            j->sp->str = new_s8(&j->sp->a, STR_ALLOC);
             if (j->sp->str.buf == NULL) {
                 crash("OOM");
             }
@@ -265,7 +272,7 @@ static void expect_start_value(_jsonst *j, const char c) {
         default:
             if (is_digit(c) || c == '-') {
                 push(j, jsonst_num);
-                j->sp->str = new_s8(&j->a, NUM_STR_ALLOC);
+                j->sp->str = new_s8(&j->sp->a, NUM_STR_ALLOC);
                 if (j->sp->str.buf == NULL) {
                     crash("OOM");
                 }
@@ -375,7 +382,7 @@ static void feed(_jsonst *j, const char c) {
             }
             if (c == '"') {
                 push(j, jsonst_obj_name);
-                j->sp->str = new_s8(&j->a, STR_ALLOC);
+                j->sp->str = new_s8(&j->sp->a, STR_ALLOC);
                 if (j->sp->str.buf == NULL) {
                     crash("OOM");
                 }
@@ -506,7 +513,7 @@ static void feed(_jsonst *j, const char c) {
         case jsonst_str_escp:
             if (c == 'u') {
                 push(j, (int)jsonst_str_escp_uhex);
-                j->sp->str = new_s8(&j->a, 4);
+                j->sp->str = new_s8(&j->sp->a, 4);
                 if (j->sp->str.buf == NULL) {
                     crash("OOM");
                 }
@@ -552,7 +559,7 @@ static void feed(_jsonst *j, const char c) {
             const uint32_t n = parse_hex4(j->sp->str);
             if (is_utf16_high_surrogate(n)) {
                 push(j, (int)jsonst_str_escp_uhex_utf16);
-                j->sp->str = new_s8(&j->a, 4);
+                j->sp->str = new_s8(&j->sp->a, 4);
                 if (j->sp->str.buf == NULL) {
                     crash("OOM");
                 }
