@@ -48,39 +48,3 @@ s8 new_s8(arena *a, const ptrdiff_t len) {
     r.len = len;
     return r;
 }
-
-s8 s8span(char *beg, char *end) {
-    s8 s = {0};
-    s.buf = beg;
-    s.len = end - beg;
-    return s;
-}
-
-int32_t s8equal(s8 a, s8 b) {
-    if (a.len != b.len) {
-        return 0;
-    }
-    for (ptrdiff_t i = 0; i < a.len; i++) {
-        if (a.buf[i] != b.buf[i]) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-ptrdiff_t s8cmp(s8 a, s8 b) {
-    ptrdiff_t len = a.len < b.len ? a.len : b.len;
-    for (ptrdiff_t i = 0; i < len; i++) {
-        ptrdiff_t d = a.buf[i] - b.buf[i];
-        if (d) {
-            return d;
-        }
-    }
-    return a.len - b.len;
-}
-
-s8 s8clone(arena *a, s8 s) {
-    s8 c = new_s8(a, s.len);
-    copy(c.buf, s.buf, s.len);
-    return c;
-}

@@ -29,7 +29,7 @@ static void crash(const char *format, ...) {
     abort();
 }
 
-static frame *new_frame(arena *a, frame *prev, const json_type type) {
+static frame *new_frame(arena *a, frame *prev, const json_type /* or json_internal_states */ type) {
     frame *r = new (a, frame, 1, 0);
     r->prev = prev;
     r->type = type;
@@ -62,7 +62,7 @@ json_streamer new_json_streamer(arena a, jsons_event_cb cb) {
     return r;
 }
 
-static void emit(_json_streamer *j, const json_type type) {
+static void emit(_json_streamer *j, const json_type /* or json_internal_states */ type) {
     arena scratch = j->a;
 
     jsons_value *v = new (&scratch, jsons_value, 1, 0);
@@ -78,8 +78,8 @@ static void emit(_json_streamer *j, const json_type type) {
             }
         } break;
         case json_str:
-        case json_obj_key:
-            assert(j->sp->type == json_str || j->sp->type == json_obj_key);
+        case json_obj_name:
+            assert(j->sp->type == json_str || j->sp->type == json_obj_name);
             v->val_str.str = j->sp->str.buf;
             v->val_str.str_len = j->sp->str.len;
             break;
@@ -89,7 +89,6 @@ static void emit(_json_streamer *j, const json_type type) {
     }
 
     jsons_path *p = new (&scratch, jsons_path, 1, 0);
-    // TODO: fill in path!
 
     j->cb(v, p);
 }
@@ -195,13 +194,13 @@ static void utf8_encode(frame *f, uint32_t c) {
     crash("could not encode as utf-8: '%c' = %d", c, c);
 }
 
-static void push(_json_streamer *j, const json_type type) {
+static void push(_json_streamer *j, const json_type /* or json_internal_states */ type) {
     visualize_stack(j->sp);
     printf("push('%c')\n", type);
     j->sp = new_frame(&(j->a), j->sp, type);
 }
 
-static void pop(_json_streamer *j, const json_type expect_type) {
+static void pop(_json_streamer *j, const json_type /* or json_internal_states */ expect_type) {
     visualize_stack(j->sp);
     printf("pop('%c')\n", j->sp->type);
     if (j->sp == NULL) {
@@ -353,31 +352,31 @@ static void feed(_json_streamer *j, const char c) {
                 return;
             }
             if (c == '"') {
-                push(j, json_obj_key);
+                push(j, json_obj_name);
                 j->sp->str = new_s8(&j->a, JSON_STR_MAX_LEN);
                 return;
             }
             crash("invalid char '%c', expected '\"' or '}'", c);
             return;
-        case json_obj_post_key:
+        case json_obj_post_name:
             if (is_ws(c)) {
                 return;
             }
             if (c == ':') {
-                pop(j, (int)json_obj_post_key);
-                assert(j->sp->type == json_obj_key);
-                push(j, (int)json_obj_post_colon);
+                pop(j, (int)json_obj_post_name);
+                assert(j->sp->type == json_obj_name);
+                push(j, (int)json_obj_post_sep);
                 // We now still have the key on the stack one below.
                 return;
             }
             crash("invalid char '%c': expected ':'", c);
             return;
-        case json_obj_post_colon:
+        case json_obj_post_sep:
             if (is_ws(c)) {
                 return;
             }
-            pop(j, (int)json_obj_post_colon);
-            assert(j->sp->type == json_obj_key);
+            pop(j, (int)json_obj_post_sep);
+            assert(j->sp->type == json_obj_name);
             push(j, (int)json_obj_next);
             expect_start_value(j, c);
             return;
@@ -387,13 +386,13 @@ static void feed(_json_streamer *j, const char c) {
             }
             if (c == ',') {
                 pop(j, (int)json_obj_next);
-                pop(j, json_obj_key);
+                pop(j, json_obj_name);
                 assert(j->sp->type == json_obj);
                 return;
             }
             if (c == '}') {
                 pop(j, (int)json_obj_next);
-                pop(j, json_obj_key);
+                pop(j, json_obj_name);
                 emit(j, json_obj_end);
                 pop(j, json_obj);
                 return;
@@ -431,16 +430,16 @@ static void feed(_json_streamer *j, const char c) {
             }
             return;
         case json_str:
-        case json_obj_key:
+        case json_obj_name:
             if (c == '"') {
                 if (j->sp->type == json_str) {
                     emit(j, 0);
                     pop(j, json_str);
                     return;
                 }
-                assert(j->sp->type == json_obj_key);
-                emit(j, json_obj_key);
-                push(j, (int)json_obj_post_key);
+                assert(j->sp->type == json_obj_name);
+                emit(j, json_obj_name);
+                push(j, (int)json_obj_post_name);
                 // We leave the key on the stack for now.
                 return;
             }
@@ -488,7 +487,7 @@ static void feed(_json_streamer *j, const char c) {
             const char unquoted = is_quotable(c);
             if (unquoted != 0) {
                 // Write to underlying string buffer.
-                assert(j->sp->prev->type == json_str || j->sp->prev->type == json_obj_key);
+                assert(j->sp->prev->type == json_str || j->sp->prev->type == json_obj_name);
                 frame_buf_putc(j->sp->prev, unquoted);
                 pop(j, (int)json_str_escp);
                 return;
@@ -501,7 +500,7 @@ static void feed(_json_streamer *j, const char c) {
                 crash("invalid utf8-encoding, expected 0b10xxxxxx but got 0x%x", c);
             }
             // Write to underlying string buffer.
-            assert(j->sp->prev->type == json_str || j->sp->prev->type == json_obj_key);
+            assert(j->sp->prev->type == json_str || j->sp->prev->type == json_obj_name);
             frame_buf_putc(j->sp->prev, c);
 
             j->sp->len--;
@@ -511,7 +510,7 @@ static void feed(_json_streamer *j, const char c) {
             return;
         case json_str_escp_uhex:
             assert(j->sp->prev->type == json_str_escp);
-            assert(j->sp->prev->prev->type == json_str || j->sp->prev->prev->type == json_obj_key);
+            assert(j->sp->prev->prev->type == json_str || j->sp->prev->prev->type == json_obj_name);
             if (!is_xdigit(c)) {
                 crash("expected hex digit but got '%c'", c);
                 return;
@@ -536,7 +535,7 @@ static void feed(_json_streamer *j, const char c) {
             assert(j->sp->prev->type == json_str_escp_uhex);
             assert(j->sp->prev->prev->type == json_str_escp);
             assert(j->sp->prev->prev->prev->type == json_str ||
-                   j->sp->prev->prev->prev->type == json_obj_key);
+                   j->sp->prev->prev->prev->type == json_obj_name);
 
             if (j->sp->len == -2 && c == '\\') {
                 j->sp->len++;
@@ -587,8 +586,7 @@ static void feed(_json_streamer *j, const char c) {
 
                 return;
             }
-            // TODO: do proper parsing instead of just accepting everything and leaving the work to
-            // stdlib.
+            // One day, maybe do proper parsing instead of leaving the work to strtof.
             frame_buf_putc(j->sp, c);
             return;
         default:
@@ -596,6 +594,4 @@ static void feed(_json_streamer *j, const char c) {
     }
 }
 
-// public entrypoints
-// TODO: proper error handling - return errors instead of crashing.
 void json_streamer_feed(json_streamer j, const char c) { feed(j, c); }

@@ -24,8 +24,8 @@ const char *json_type_to_str(json_type type) {
             return "json_arry_end";
         case json_obj:
             return "json_obj";
-        case json_obj_key:
-            return "json_obj_key";
+        case json_obj_name:
+            return "json_obj_name";
         case json_obj_end:
             return "json_obj_end";
     }

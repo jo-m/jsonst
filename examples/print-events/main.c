@@ -26,7 +26,7 @@ void cb(const jsons_value *value, const jsons_path *path) {
             printf("jsons_event_cb(%p, %s, '%.*s')\n", (void *)path, json_type_to_str(value->type),
                    (int)value->val_str.str_len, value->val_str.str);
             break;
-        case json_obj_key:
+        case json_obj_name:
             printf("jsons_event_cb(%p, %s, k='%.*s')\n", (void *)path,
                    json_type_to_str(value->type), (int)value->val_str.str_len, value->val_str.str);
             break;
