@@ -658,8 +658,8 @@ jsonst_error jsonst_feed(jsonst j, const char c) {
 jsonst_feed_doc_ret jsonst_feed_doc(jsonst j, const char *doc, const size_t docsz) {
     jsonst_feed_doc_ret ret = {0};
 
-    for (ret.parsed_chars = 0; ret.parsed_chars < docsz; ret.parsed_chars++) {
-        ret.err = jsonst_feed(j, doc[ret.parsed_chars]);
+    for (ret.parsed_bytes = 0; ret.parsed_bytes < docsz; ret.parsed_bytes++) {
+        ret.err = jsonst_feed(j, doc[ret.parsed_bytes]);
         if (ret.err != jsonst_success) {
             return ret;
         }

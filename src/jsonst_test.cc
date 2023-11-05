@@ -39,13 +39,13 @@ TEST(JsonstTest, ConfigAllocStr) {
     EXPECT_EQ(R"(
 $=(jsonst_str)'12'
 ret=jsonst_success
-parsed_chars=4
+parsed_bytes=4
 )",
               parse_doc_to_txt(DEFAULT_MEMSZ, R"("12")", conf));
 
     EXPECT_EQ(R"(
 ret=jsonst_err_str_buffer_full
-parsed_chars=3
+parsed_bytes=3
 )",
               parse_doc_to_txt(DEFAULT_MEMSZ, R"("123")", conf));
 }
@@ -59,14 +59,14 @@ $.123=(jsonst_obj_key)'123'
 $.123=jsonst_true
 $=(jsonst_obj_end)
 ret=jsonst_success
-parsed_chars=12
+parsed_bytes=12
 )",
               parse_doc_to_txt(DEFAULT_MEMSZ, R"({"123":true})", conf));
 
     EXPECT_EQ(R"(
 $=(jsonst_obj)
 ret=jsonst_err_str_buffer_full
-parsed_chars=5
+parsed_bytes=5
 )",
               parse_doc_to_txt(DEFAULT_MEMSZ, R"({"1234":true})", conf));
 }
@@ -77,13 +77,13 @@ TEST(JsonstTest, ConfigAllocNum) {
     EXPECT_EQ(R"(
 $=(jsonst_num)1234
 ret=jsonst_success
-parsed_chars=4
+parsed_bytes=4
 )",
               parse_doc_to_txt(DEFAULT_MEMSZ, R"(1234)", conf));
 
     EXPECT_EQ(R"(
 ret=jsonst_err_str_buffer_full
-parsed_chars=4
+parsed_bytes=4
 )",
               parse_doc_to_txt(DEFAULT_MEMSZ, R"(12345)", conf));
 }
@@ -99,7 +99,7 @@ TEST(JsonstTest, ConfigStrtod) {
     EXPECT_EQ(R"(
 $=(jsonst_num)4444
 ret=jsonst_success
-parsed_chars=4
+parsed_bytes=4
 )",
               parse_doc_to_txt(DEFAULT_MEMSZ, R"(1111)", conf));
 
@@ -107,7 +107,7 @@ parsed_chars=4
     EXPECT_EQ(R"(
 $=(jsonst_num)1111
 ret=jsonst_success
-parsed_chars=4
+parsed_bytes=4
 )",
               parse_doc_to_txt(DEFAULT_MEMSZ, R"(1111)", conf));
 }
@@ -221,7 +221,7 @@ $.k[2]=(jsonst_str)'strval'
 $.k=(jsonst_arry_end)
 $=(jsonst_obj_end)
 ret=jsonst_success
-parsed_chars=26
+parsed_bytes=26
 )",
               parse_doc_to_txt(DEFAULT_MEMSZ, R"({"k": [123,true,"strval"]})"));
 }

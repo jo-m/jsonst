@@ -92,7 +92,7 @@ std::string parse_doc_to_txt(const ptrdiff_t memsz, const std::string doc,
     free(mem);
 
     o << "ret=" << jsonst_error_to_str(ret.err) << std::endl;
-    o << "parsed_chars=" << ret.parsed_chars << std::endl;
+    o << "parsed_bytes=" << ret.parsed_bytes << std::endl;
 
     return o.str();
 }

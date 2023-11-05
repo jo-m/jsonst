@@ -121,8 +121,7 @@ jsonst_error jsonst_feed(jsonst j, const char c);
 // Return value of jsonst_feed_doc.
 typedef struct {
     jsonst_error err;
-    // Number of chars consumed.
-    size_t parsed_chars;
+    size_t parsed_bytes;
 } jsonst_feed_doc_ret;
 
 jsonst_feed_doc_ret jsonst_feed_doc(jsonst j, const char* doc, const size_t docsz);
