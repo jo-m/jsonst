@@ -96,7 +96,9 @@ typedef enum {
 
 } jsonst_error;
 
-// At the end of your input, you must call this method once with c = EOF.
+#define JSONST_EOF (-1)
+
+// At the end of your input, you must call this method once with c = JSONST_EOF.
 jsonst_error jsonst_feed(jsonst j, char c) __attribute((warn_unused_result));
 
 jsonst_error jsonst_feed_doc(jsonst j, const char* doc, const ptrdiff_t docsz)

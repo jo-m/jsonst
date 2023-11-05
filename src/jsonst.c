@@ -1,19 +1,10 @@
 #include "jsonst.h"
 
 #include <assert.h>
-#include <stdio.h>   // TODO: remove
-#include <stdlib.h>  // TODO: remove
+#include <stdlib.h>  // strtod()
 
 #include "jsonst_impl.h"
 #include "util.h"
-
-static void visualize_stack(const frame *top) {
-    if (top == NULL) {
-        return;
-    }
-    visualize_stack(top->prev);
-    printf("'%c' > ", top->type);
-}
 
 static frame *new_frame(arena *a, frame *prev,
                         const jsonst_type /* or jsonst_internal_state */ type) {
@@ -241,8 +232,6 @@ static jsonst_error utf8_encode(frame *f, uint32_t c) {
 static jsonst_error push(_jsonst *j, const jsonst_type /* or jsonst_internal_state */ type)
     __attribute((warn_unused_result));
 static jsonst_error push(_jsonst *j, const jsonst_type /* or jsonst_internal_state */ type) {
-    visualize_stack(j->sp);
-    printf("push('%c')\n", type);
     j->sp = new_frame(&(j->sp->a), j->sp, type);
     if (j->sp == NULL) {
         return jsonst_err_oom;
@@ -251,8 +240,6 @@ static jsonst_error push(_jsonst *j, const jsonst_type /* or jsonst_internal_sta
 }
 
 static void pop(_jsonst *j, const jsonst_type /* or jsonst_internal_state */ expect_type) {
-    visualize_stack(j->sp);
-    printf("pop('%c')\n", j->sp->type);
     assert(j->sp != NULL);
     assert(j->sp->type == (int)expect_type);
 
@@ -328,11 +315,8 @@ static char is_quotable(const char c) {
 
 static jsonst_error feed(_jsonst *j, const char c) __attribute((warn_unused_result));
 static jsonst_error feed(_jsonst *j, const char c) {
-    visualize_stack(j->sp);
-    printf("feed(\"%c\" = %d)\n", c, c);
-
     // EOF, with special treatment for numbers (which have no delimiters themselves).
-    if (c == EOF && j->sp->type != jsonst_num) {
+    if (c == JSONST_EOF && j->sp->type != jsonst_num) {
         if (j->sp->type == jsonst_doc) {
             j->sp = NULL;
         }
@@ -665,5 +649,5 @@ jsonst_error jsonst_feed_doc(jsonst j, const char *doc, const ptrdiff_t docsz) {
             return ret;
         }
     }
-    return jsonst_feed(j, EOF);
+    return jsonst_feed(j, JSONST_EOF);
 }

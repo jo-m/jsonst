@@ -32,7 +32,7 @@ TEST(JsonstTest, ErrorLivecycle) {
     jsonst j = new_jsonst(mem, DEFAULT_MEMSZ, cb);
     EXPECT_EQ(jsonst_success, jsonst_feed(j, '{'));
     EXPECT_EQ(jsonst_success, jsonst_feed(j, '}'));
-    EXPECT_EQ(jsonst_success, jsonst_feed(j, EOF));
+    EXPECT_EQ(jsonst_success, jsonst_feed(j, JSONST_EOF));
     EXPECT_EQ(jsonst_success, jsonst_feed(j, ' '));
     EXPECT_EQ(jsonst_err_end_of_doc, jsonst_feed(j, '{'));
     EXPECT_EQ(jsonst_err_previous_error, jsonst_feed(j, ' '));
