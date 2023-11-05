@@ -9,7 +9,7 @@
 static frame *new_frame(arena *a, frame *prev,
                         const jsonst_type /* or jsonst_internal_state */ type) {
     // Allocate the frame itself on the parent arena.
-    frame *f = new (a, frame, 1, 0);
+    frame *f = new (a, frame, 1);
     if (f == NULL) {
         return NULL;
     }
@@ -22,9 +22,9 @@ static frame *new_frame(arena *a, frame *prev,
     return f;
 }
 
-_jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, jsonst_value_cb cb) {
+static _jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_value_cb cb) {
     arena a = new_arena(mem, memsz);
-    jsonst j = new (&a, _jsonst, 1, 0);
+    jsonst j = new (&a, _jsonst, 1);
     if (j == NULL) {
         return NULL;
     }
@@ -42,7 +42,7 @@ _jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, jsonst_value_cb cb) {
     return j;
 }
 
-jsonst new_jsonst(uint8_t *mem, const ptrdiff_t memsz, jsonst_value_cb cb) {
+jsonst new_jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_value_cb cb) {
     return new__jsonst(mem, memsz, cb);
 }
 
@@ -57,12 +57,12 @@ static jsonst_error frame_buf_putc(frame *f, const char c) {
     return jsonst_success;
 }
 
-static jsonst_error emit(_jsonst *j, const jsonst_type /* or jsonst_internal_state */ type)
+static jsonst_error emit(const _jsonst *j, const jsonst_type /* or jsonst_internal_state */ type)
     __attribute((warn_unused_result));
-static jsonst_error emit(_jsonst *j, const jsonst_type /* or jsonst_internal_state */ type) {
+static jsonst_error emit(const _jsonst *j, const jsonst_type /* or jsonst_internal_state */ type) {
     arena scratch = j->sp->a;
 
-    jsonst_value *v = new (&scratch, jsonst_value, 1, 0);
+    jsonst_value *v = new (&scratch, jsonst_value, 1);
     RET_OOM_IFNULL(v);
     v->type = type;
     switch (type) {
@@ -86,7 +86,7 @@ static jsonst_error emit(_jsonst *j, const jsonst_type /* or jsonst_internal_sta
     }
 
     // Fill in path, in reverse order of stack.
-    jsonst_path *p_first = NULL, *p_last = NULL;
+    jsonst_path *p = NULL;
     for (const frame *f = j->sp; f != NULL; f = f->prev) {
         switch (f->type) {
             case jsonst_arry_elm:
@@ -96,7 +96,7 @@ static jsonst_error emit(_jsonst *j, const jsonst_type /* or jsonst_internal_sta
                 continue;
         }
 
-        jsonst_path *p_new = new (&scratch, jsonst_path, 1, 0);
+        jsonst_path *p_new = new (&scratch, jsonst_path, 1);
         if (p_new == NULL) {
             return jsonst_err_oom;
         }
@@ -113,17 +113,15 @@ static jsonst_error emit(_jsonst *j, const jsonst_type /* or jsonst_internal_sta
                 break;
         }
 
-        if (p_last == NULL) {
-            p_last = p_new;
-            p_first = p_new;
+        if (p == NULL) {
+            p = p_new;
         } else {
-            p_new->next = p_first;
-            p_first->prev = p_new;
-            p_first = p_new;
+            p_new->next = p;
+            p = p_new;
         }
     }
 
-    j->cb(v, p_first, p_last);
+    j->cb(v, p);
     return jsonst_success;
 }
 
@@ -205,8 +203,8 @@ static uint32_t parse_hex4(const s8 str) {
     return ret;
 }
 
-static jsonst_error utf8_encode(frame *f, uint32_t c) __attribute((warn_unused_result));
-static jsonst_error utf8_encode(frame *f, uint32_t c) {
+static jsonst_error utf8_encode(frame *f, const uint32_t c) __attribute((warn_unused_result));
+static jsonst_error utf8_encode(frame *f, const uint32_t c) {
     if (c <= 0x7F) {
         RET_ON_ERR(frame_buf_putc(f, c));
         return jsonst_success;

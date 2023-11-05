@@ -21,28 +21,6 @@ typedef enum {
     jsonst_obj_end = '}',
 } jsonst_type;
 
-typedef struct jsonst_path jsonst_path;
-typedef struct jsonst_path {
-    // Valid options are only jsonst_arry_elm, jsonst_obj_key.
-    jsonst_type type;
-
-    // Will be NULL for last path segment.
-    jsonst_path* next;
-    // Will be NULL for first path segment.
-    jsonst_path* prev;
-
-    union {
-        // Set if type == jsonst_arry_elm.
-        uint32_t arry_ix;
-
-        // Set if type == jsonst_obj_key.
-        struct {
-            char* str;
-            ptrdiff_t str_len;
-        } obj_key;
-    } props;
-} jsonst_path;
-
 typedef struct {
     jsonst_type type;
 
@@ -58,9 +36,30 @@ typedef struct {
     };
 } jsonst_value;
 
+typedef struct jsonst_path jsonst_path;
+typedef struct jsonst_path {
+    // Valid options are only jsonst_arry_elm, jsonst_obj_key.
+    jsonst_type type;
+
+    // Will be NULL for last path segment.
+    jsonst_path* next;
+
+    union {
+        // Set if type == jsonst_arry_elm.
+        uint32_t arry_ix;
+
+        // Set if type == jsonst_obj_key.
+        struct {
+            char* str;
+            ptrdiff_t str_len;
+        } obj_key;
+    } props;
+} jsonst_path;
+
 // Callback signature.
-typedef void (*jsonst_value_cb)(const jsonst_value* value, const jsonst_path* p_first,
-                                const jsonst_path* p_last);
+// All arguments and locations they might point to have valid lifetime only until the callback
+// returns.
+typedef void (*jsonst_value_cb)(const jsonst_value* value, const jsonst_path* p);
 
 // Opaque handle.
 typedef struct _jsonst* jsonst;
@@ -71,8 +70,7 @@ typedef struct _jsonst* jsonst;
 // Might return NULL on OOM.
 // To reset an instance to parse a new doc after EOF has been reached,
 // simply call new_jsonst() again, with the same mem used previously.
-jsonst new_jsonst(uint8_t* mem, const ptrdiff_t memsz, jsonst_value_cb cb)
-    __attribute((warn_unused_result));
+jsonst new_jsonst(uint8_t* mem, const ptrdiff_t memsz, const jsonst_value_cb cb);
 
 typedef enum {
     jsonst_success = 0,
@@ -93,13 +91,11 @@ typedef enum {
     jsonst_err_invalid_number,
     jsonst_err_invalid_unicode_codepoint,
     jsonst_err_invalid_utf16_surrogate,
-
 } jsonst_error;
 
 #define JSONST_EOF (-1)
 
 // At the end of your input, you must call this method once with c = JSONST_EOF.
-jsonst_error jsonst_feed(jsonst j, char c) __attribute((warn_unused_result));
+jsonst_error jsonst_feed(jsonst j, const char c);
 
-jsonst_error jsonst_feed_doc(jsonst j, const char* doc, const ptrdiff_t docsz)
-    __attribute((warn_unused_result));
+jsonst_error jsonst_feed_doc(jsonst j, const char* doc, const ptrdiff_t docsz);

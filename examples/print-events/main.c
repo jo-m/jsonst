@@ -7,10 +7,8 @@
 
 static const char doc[] = "{ \"key0\":[1,2,3,{\"key1\":false}] }";
 
-void cb(const jsonst_value *value, const jsonst_path *p_first, const jsonst_path *p_last) {
-    jsonst_path_print(p_first);
-    printf("\n");
-    jsonst_path_print_reverse(p_last);
+static void cb(const jsonst_value *value, const jsonst_path *p) {
+    jsonst_path_print(p);
     printf("\n");
 
     switch (value->type) {

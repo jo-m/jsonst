@@ -1,3 +1,4 @@
+#include <gtest/gtest-spi.h>
 #include <gtest/gtest.h>
 
 extern "C" {
@@ -5,14 +6,13 @@ extern "C" {
 #include "jsonst_helpers.h"
 }
 
-void cb(const jsonst_value *value, const jsonst_path __attribute((unused)) * p_first,
-        const jsonst_path __attribute((unused)) * p_last) {
+static void cb(const jsonst_value *value, const jsonst_path __attribute((unused)) * p) {
     printf("jsonst_value_cb(%d, %s)\n", value->type, jsonst_type_to_str(value->type));
 }
 
 #define DEFAULT_MEMSZ (8 * 1024)
 
-void parse_doc(const ptrdiff_t memsz, const std::string doc) {
+static void parse_doc(const ptrdiff_t memsz, const std::string doc) {
     uint8_t *mem = new uint8_t[memsz];
     EXPECT_NE(mem, nullptr);
 
@@ -37,6 +37,13 @@ TEST(JsonstTest, ErrorLivecycle) {
     EXPECT_EQ(jsonst_err_end_of_doc, jsonst_feed(j, '{'));
     EXPECT_EQ(jsonst_err_previous_error, jsonst_feed(j, ' '));
     EXPECT_EQ(jsonst_err_previous_error, jsonst_feed(j, ' '));
+}
+
+TEST(JsonstTest, NoCb) {
+    uint8_t *mem = new uint8_t[DEFAULT_MEMSZ];
+    EXPECT_NE(mem, nullptr);
+
+    ASSERT_DEATH(new_jsonst(mem, DEFAULT_MEMSZ, NULL), "cb != NULL");
 }
 
 TEST(JsonstTest, Null) {

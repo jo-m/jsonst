@@ -14,7 +14,7 @@ TEST(UtilTest, NullTerm) {
     arena a = new_arena(mem, memsz);
     {
         arena scratch = a;
-        void *arena_fill = alloc(&scratch, 1, alignof(int8_t), memsz, 0);
+        void *arena_fill = alloc(&scratch, 1, alignof(int8_t), memsz);
         memset(arena_fill, 'a', memsz);
     }
 

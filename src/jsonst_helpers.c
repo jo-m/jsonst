@@ -49,18 +49,3 @@ void jsonst_path_print(const jsonst_path *path) {
         }
     }
 }
-
-void jsonst_path_print_reverse(const jsonst_path *path) {
-    for (const jsonst_path *p = path; p != NULL; p = p->prev) {
-        switch (p->type) {
-            case jsonst_arry_elm:
-                printf("[%d]", p->props.arry_ix);
-                break;
-            case jsonst_obj_key:
-                printf("['%.*s']", (int)p->props.obj_key.str_len, p->props.obj_key.str);
-                break;
-            default:
-                break;
-        }
-    }
-}

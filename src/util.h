@@ -18,15 +18,12 @@ typedef struct {
 arena new_arena(uint8_t *mem, const ptrdiff_t memsz);
 
 // Returns NULL on OOM.
-__attribute((malloc, alloc_size(2, 4), alloc_align(3))) void *alloc(arena *a, ptrdiff_t size,
-                                                                    ptrdiff_t align,
-                                                                    ptrdiff_t count, int32_t flags);
-
-// May return arena.beg = NULL on OOM.
-arena new_scratch(arena *a, ptrdiff_t cap);
+__attribute((malloc, alloc_size(2), alloc_align(3))) void *alloc(arena *a, ptrdiff_t size,
+                                                                 ptrdiff_t align, ptrdiff_t count)
+    __attribute((warn_unused_result));
 
 // clang-format off
-#define new(a, t, n, f)(t *) alloc(a, sizeof(t), _Alignof(t), n, f)
+#define new(a, t, n)(t *) alloc(a, sizeof(t), _Alignof(t), n)
 // clang-format on
 
 #define s8(s) \
@@ -40,4 +37,4 @@ typedef struct {
 } s8;
 
 // May return s8.buf = NULL on OOM.
-s8 new_s8(arena *a, ptrdiff_t len);
+s8 new_s8(arena *a, ptrdiff_t len) __attribute((warn_unused_result));
