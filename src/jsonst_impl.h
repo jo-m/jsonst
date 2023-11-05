@@ -12,7 +12,7 @@
 #define STR_ALLOC (ptrdiff_t)128
 #define NUM_STR_ALLOC (ptrdiff_t)64
 
-// In most places where jsonst_type is used, jsonst_internal_states may also be used.
+// In most places where jsonst_type is used, jsonst_internal_state may also be used.
 // Thus, we need to be careful to no accidentally introduce overlaps.
 typedef enum {
     jsonst_arry_elm_next = '+',
@@ -25,13 +25,15 @@ typedef enum {
     jsonst_str_escp = '\\',
     jsonst_str_escp_uhex = '%',
     jsonst_str_escp_uhex_utf16 = '6',
-} jsonst_internal_states;
+} jsonst_internal_state;
 
 typedef struct frame frame;
 struct frame {
     frame *prev;
-    int type;  // Is a jsonst_type or jsonst_internal_states.
+    int type;  // Is a jsonst_type or jsonst_internal_state.
     arena a;
+
+    uint32_t input_counter;
 
     // Processing state, usage depends on type.
     // Some types will use len separately without str.
@@ -42,6 +44,20 @@ struct frame {
 typedef struct _jsonst _jsonst;
 typedef struct _jsonst {
     jsonst_value_cb cb;
-
+    jsonst_error failed;
     frame *sp;
 } _jsonst;
+
+// Helper for error handling.
+#define RET_ON_ERR(expr)                 \
+    {                                    \
+        const jsonst_error ret = (expr); \
+        if (ret != jsonst_success) {     \
+            return ret;                  \
+        }                                \
+    }
+
+#define RET_OOM_IFNULL(expr)   \
+    if ((expr) == NULL) {      \
+        return jsonst_err_oom; \
+    }

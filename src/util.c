@@ -22,7 +22,7 @@ __attribute((malloc, alloc_size(2, 4), alloc_align(3))) void *alloc(arena *a, pt
     a->beg += padding + total;
 
     // memset(p, 0, total)
-    for (int i = 0; i < total; i++) {
+    for (ptrdiff_t i = 0; i < total; i++) {
         p[i] = 0;
     }
 

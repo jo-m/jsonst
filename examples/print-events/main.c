@@ -5,7 +5,7 @@
 #include "src/jsonst.h"
 #include "src/jsonst_helpers.h"
 
-static const char *doc = "{ \"key0\":[1,2,3,{\"key1\":false}] }";
+static const char doc[] = "{ \"key0\":[1,2,3,{\"key1\":false}] }";
 
 void cb(const jsonst_value *value, const jsonst_path *p_first, const jsonst_path *p_last) {
     jsonst_path_print(p_first);
@@ -15,11 +15,7 @@ void cb(const jsonst_value *value, const jsonst_path *p_first, const jsonst_path
 
     switch (value->type) {
         case jsonst_null:
-            printf("jsonst_value_cb(%s)\n", jsonst_type_to_str(value->type));
-            break;
         case jsonst_true:
-            printf("jsonst_value_cb(%s)\n", jsonst_type_to_str(value->type));
-            break;
         case jsonst_false:
             printf("jsonst_value_cb(%s)\n", jsonst_type_to_str(value->type));
             break;
@@ -35,16 +31,10 @@ void cb(const jsonst_value *value, const jsonst_path *p_first, const jsonst_path
                    (int)value->val_str.str_len, value->val_str.str);
             break;
         case jsonst_arry:
-            printf("jsonst_value_cb(%s, [)\n", jsonst_type_to_str(value->type));
-            break;
         case jsonst_arry_end:
-            printf("jsonst_value_cb(%s, ])\n", jsonst_type_to_str(value->type));
-            break;
         case jsonst_obj:
-            printf("jsonst_value_cb(%s, {)\n", jsonst_type_to_str(value->type));
-            break;
         case jsonst_obj_end:
-            printf("jsonst_value_cb(%s, })\n", jsonst_type_to_str(value->type));
+            printf("jsonst_value_cb(%s, %c)\n", jsonst_type_to_str(value->type), value->type);
             break;
         default:
             printf("unhandled %d\n", (int)value->type);
@@ -60,11 +50,9 @@ int main(void) {
     printf("%s\n", doc);
 
     jsonst j = new_jsonst(mem, memsz, cb);
-    for (ptrdiff_t i = 0; doc[i] != 0; i++) {
-        jsonst_feed(j, doc[i]);
-    }
-    jsonst_feed(j, EOF);
+    const jsonst_error ret = jsonst_feed_doc(j, doc, sizeof(doc) - 1);
+    assert(ret == jsonst_success);
 
     free(mem);
-    return 0;
+    return EXIT_SUCCESS;
 }

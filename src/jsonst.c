@@ -1,6 +1,6 @@
 #include "jsonst.h"
 
-#include <stdarg.h>  // TODO: remove
+#include <assert.h>
 #include <stdio.h>   // TODO: remove
 #include <stdlib.h>  // TODO: remove
 
@@ -15,21 +15,8 @@ static void visualize_stack(const frame *top) {
     printf("'%c' > ", top->type);
 }
 
-static void crash(const char *format, ...) {
-    printf("\n============ CRASH ============\n");
-
-    va_list args;
-    va_start(args, format);
-    vprintf(format, args);
-
-    va_end(args);
-
-    printf("\n============ /CRASH ===========\n");
-    abort();
-}
-
 static frame *new_frame(arena *a, frame *prev,
-                        const jsonst_type /* or jsonst_internal_states */ type) {
+                        const jsonst_type /* or jsonst_internal_state */ type) {
     // Allocate the frame itself on the parent arena.
     frame *f = new (a, frame, 1, 0);
     if (f == NULL) {
@@ -54,6 +41,8 @@ _jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, jsonst_value_cb cb) {
     assert(cb != NULL);
     j->cb = cb;
 
+    j->failed = jsonst_success;
+
     j->sp = new_frame(&a, NULL, jsonst_doc);
     if (j->sp == NULL) {
         return NULL;
@@ -66,22 +55,24 @@ jsonst new_jsonst(uint8_t *mem, const ptrdiff_t memsz, jsonst_value_cb cb) {
     return new__jsonst(mem, memsz, cb);
 }
 
-static void frame_buf_putc(frame *f, const char c) {
+static jsonst_error frame_buf_putc(frame *f, const char c) __attribute((warn_unused_result));
+static jsonst_error frame_buf_putc(frame *f, const char c) {
     assert(f->str.buf != NULL);
     if (f->len >= f->str.len) {
-        crash("frame_buf_putc(): buffer full");
+        return jsonst_err_str_buffer_full;
     }
     f->str.buf[f->len] = c;
     f->len++;
+    return jsonst_success;
 }
 
-static void emit(_jsonst *j, const jsonst_type /* or jsonst_internal_states */ type) {
+static jsonst_error emit(_jsonst *j, const jsonst_type /* or jsonst_internal_state */ type)
+    __attribute((warn_unused_result));
+static jsonst_error emit(_jsonst *j, const jsonst_type /* or jsonst_internal_state */ type) {
     arena scratch = j->sp->a;
 
     jsonst_value *v = new (&scratch, jsonst_value, 1, 0);
-    if (v == NULL) {
-        crash("OOM");
-    }
+    RET_OOM_IFNULL(v);
     v->type = type;
     switch (type) {
         case jsonst_num: {
@@ -89,8 +80,7 @@ static void emit(_jsonst *j, const jsonst_type /* or jsonst_internal_states */ t
             char *endptr;
             v->val_num = strtod(j->sp->str.buf, &endptr);
             if (endptr != j->sp->str.buf + j->sp->len) {
-                crash("failed to parse number or did not parse entire buffer '%.*s'", j->sp->len,
-                      j->sp->str.buf);
+                return jsonst_err_invalid_number;
             }
         } break;
         case jsonst_str:
@@ -104,8 +94,8 @@ static void emit(_jsonst *j, const jsonst_type /* or jsonst_internal_states */ t
             break;
     }
 
+    // Fill in path, in reverse order of stack.
     jsonst_path *p_first = NULL, *p_last = NULL;
-    // TODO: actually fill in arry_ix for arrays
     for (const frame *f = j->sp; f != NULL; f = f->prev) {
         switch (f->type) {
             case jsonst_arry_elm:
@@ -117,7 +107,7 @@ static void emit(_jsonst *j, const jsonst_type /* or jsonst_internal_states */ t
 
         jsonst_path *p_new = new (&scratch, jsonst_path, 1, 0);
         if (p_new == NULL) {
-            crash("OOM");
+            return jsonst_err_oom;
         }
         p_new->type = f->type;
 
@@ -143,6 +133,7 @@ static void emit(_jsonst *j, const jsonst_type /* or jsonst_internal_states */ t
     }
 
     j->cb(v, p_first, p_last);
+    return jsonst_success;
 }
 
 static bool is_digit(const char c) { return c >= '0' && c <= '9'; }
@@ -223,45 +214,46 @@ static uint32_t parse_hex4(const s8 str) {
     return ret;
 }
 
-static void utf8_encode(frame *f, uint32_t c) {
+static jsonst_error utf8_encode(frame *f, uint32_t c) __attribute((warn_unused_result));
+static jsonst_error utf8_encode(frame *f, uint32_t c) {
     if (c <= 0x7F) {
-        frame_buf_putc(f, c);
-        return;
+        RET_ON_ERR(frame_buf_putc(f, c));
+        return jsonst_success;
     } else if (c <= 0x07FF) {
-        frame_buf_putc(f, (((c >> 6) & 0x1F) | 0xC0));
-        frame_buf_putc(f, (((c >> 0) & 0x3F) | 0x80));
-        return;
+        RET_ON_ERR(frame_buf_putc(f, (((c >> 6) & 0x1F) | 0xC0)));
+        RET_ON_ERR(frame_buf_putc(f, (((c >> 0) & 0x3F) | 0x80)));
+        return jsonst_success;
     } else if (c <= 0xFFFF) {
-        frame_buf_putc(f, (((c >> 12) & 0x0F) | 0xE0));
-        frame_buf_putc(f, (((c >> 6) & 0x3F) | 0x80));
-        frame_buf_putc(f, (((c >> 0) & 0x3F) | 0x80));
-        return;
+        RET_ON_ERR(frame_buf_putc(f, (((c >> 12) & 0x0F) | 0xE0)));
+        RET_ON_ERR(frame_buf_putc(f, (((c >> 6) & 0x3F) | 0x80)));
+        RET_ON_ERR(frame_buf_putc(f, (((c >> 0) & 0x3F) | 0x80)));
+        return jsonst_success;
     } else if (c <= 0x10FFFF) {
-        frame_buf_putc(f, (((c >> 18) & 0x07) | 0xF0));
-        frame_buf_putc(f, (((c >> 12) & 0x3F) | 0x80));
-        frame_buf_putc(f, (((c >> 6) & 0x3F) | 0x80));
-        frame_buf_putc(f, (((c >> 0) & 0x3F) | 0x80));
-        return;
+        RET_ON_ERR(frame_buf_putc(f, (((c >> 18) & 0x07) | 0xF0)));
+        RET_ON_ERR(frame_buf_putc(f, (((c >> 12) & 0x3F) | 0x80)));
+        RET_ON_ERR(frame_buf_putc(f, (((c >> 6) & 0x3F) | 0x80)));
+        RET_ON_ERR(frame_buf_putc(f, (((c >> 0) & 0x3F) | 0x80)));
+        return jsonst_success;
     }
-    crash("could not encode as utf-8: '%c' = %d", c, c);
+    return jsonst_err_invalid_unicode_codepoint;
 }
 
-static void push(_jsonst *j, const jsonst_type /* or jsonst_internal_states */ type) {
+static jsonst_error push(_jsonst *j, const jsonst_type /* or jsonst_internal_state */ type)
+    __attribute((warn_unused_result));
+static jsonst_error push(_jsonst *j, const jsonst_type /* or jsonst_internal_state */ type) {
     visualize_stack(j->sp);
     printf("push('%c')\n", type);
     j->sp = new_frame(&(j->sp->a), j->sp, type);
     if (j->sp == NULL) {
-        crash("OOM");
+        return jsonst_err_oom;
     }
+    return jsonst_success;
 }
 
-static void pop(_jsonst *j, const jsonst_type /* or jsonst_internal_states */ expect_type) {
+static void pop(_jsonst *j, const jsonst_type /* or jsonst_internal_state */ expect_type) {
     visualize_stack(j->sp);
     printf("pop('%c')\n", j->sp->type);
-    if (j->sp == NULL) {
-        crash("pop: stack is empty");
-    }
-
+    assert(j->sp != NULL);
     assert(j->sp->type == (int)expect_type);
 
     j->sp = j->sp->prev;
@@ -272,46 +264,43 @@ static void pop(_jsonst *j, const jsonst_type /* or jsonst_internal_states */ ex
     }
 }
 
-static void expect_start_value(_jsonst *j, const char c) {
+static jsonst_error expect_start_value(_jsonst *j, const char c) __attribute((warn_unused_result));
+static jsonst_error expect_start_value(_jsonst *j, const char c) {
     switch (c) {
         case '[':
-            push(j, jsonst_arry);
-            emit(j, jsonst_arry);
-            return;
+            RET_ON_ERR(push(j, jsonst_arry));
+            RET_ON_ERR(emit(j, jsonst_arry));
+            return jsonst_success;
         case '{':
-            push(j, jsonst_obj);
-            emit(j, jsonst_obj);
-            return;
+            RET_ON_ERR(push(j, jsonst_obj));
+            RET_ON_ERR(emit(j, jsonst_obj));
+            return jsonst_success;
         case 'n':
-            push(j, jsonst_null);
+            RET_ON_ERR(push(j, jsonst_null));
             j->sp->len++;
-            return;
+            return jsonst_success;
         case 't':
-            push(j, jsonst_true);
+            RET_ON_ERR(push(j, jsonst_true));
             j->sp->len++;
-            return;
+            return jsonst_success;
         case 'f':
-            push(j, jsonst_false);
+            RET_ON_ERR(push(j, jsonst_false));
             j->sp->len++;
-            return;
+            return jsonst_success;
         case '"':
-            push(j, jsonst_str);
+            RET_ON_ERR(push(j, jsonst_str));
             j->sp->str = new_s8(&j->sp->a, STR_ALLOC);
-            if (j->sp->str.buf == NULL) {
-                crash("OOM");
-            }
-            return;
+            RET_OOM_IFNULL(j->sp->str.buf);
+            return jsonst_success;
         default:
             if (is_digit(c) || c == '-') {
-                push(j, jsonst_num);
+                RET_ON_ERR(push(j, jsonst_num));
                 j->sp->str = new_s8(&j->sp->a, NUM_STR_ALLOC);
-                if (j->sp->str.buf == NULL) {
-                    crash("OOM");
-                }
-                frame_buf_putc(j->sp, c);
-                return;
+                RET_OOM_IFNULL(j->sp->str.buf);
+                RET_ON_ERR(frame_buf_putc(j->sp, c));
+                return jsonst_success;
             }
-            crash("expect_start_value(): unexpected char '%c'", c);
+            return jsonst_err_expected_new_value;
     }
 }
 
@@ -337,7 +326,8 @@ static char is_quotable(const char c) {
     return 0;
 }
 
-static void feed(_jsonst *j, const char c) {
+static jsonst_error feed(_jsonst *j, const char c) __attribute((warn_unused_result));
+static jsonst_error feed(_jsonst *j, const char c) {
     visualize_stack(j->sp);
     printf("feed(\"%c\" = %d)\n", c, c);
 
@@ -347,262 +337,253 @@ static void feed(_jsonst *j, const char c) {
             j->sp = NULL;
         }
         assert(j->sp == NULL);
-        return;
+        return jsonst_success;
     }
 
     if (j->sp == NULL) {
         if (is_ws(c)) {
-            return;
+            return jsonst_success;
         }
-        crash("reached end of document");
+        return jsonst_err_end_of_doc;
     }
 
     switch (j->sp->type) {
         case jsonst_doc:
             if (is_ws(c)) {
-                return;
+                return jsonst_success;
             }
-            expect_start_value(j, c);
-            return;
+            RET_ON_ERR(expect_start_value(j, c));
+            return jsonst_success;
         case jsonst_arry:
             if (is_ws(c)) {
-                return;
+                return jsonst_success;
             }
             if (c == ']') {
-                emit(j, jsonst_arry_end);
+                RET_ON_ERR(emit(j, jsonst_arry_end));
                 pop(j, jsonst_arry);
-                return;
+                return jsonst_success;
             }
-            push(j, jsonst_arry_elm);
-            expect_start_value(j, c);
-            return;
+            RET_ON_ERR(push(j, jsonst_arry_elm));
+            RET_ON_ERR(expect_start_value(j, c));
+            return jsonst_success;
         case jsonst_arry_elm:
             if (is_ws(c)) {
-                return;
+                return jsonst_success;
             }
             if (c == ',') {
                 pop(j, jsonst_arry_elm);
                 assert(j->sp->type == jsonst_arry);
                 j->sp->len++;
-                push(j, (int)jsonst_arry_elm_next);
-                return;
+                RET_ON_ERR(push(j, (int)jsonst_arry_elm_next));
+                return jsonst_success;
             }
             if (c == ']') {
                 pop(j, jsonst_arry_elm);
-                emit(j, jsonst_arry_end);
+                RET_ON_ERR(emit(j, jsonst_arry_end));
                 pop(j, jsonst_arry);
-                return;
+                return jsonst_success;
             }
-            crash("invalid char '%c', expected ',' or ']'", c);
-            return;
+            // Expected ',' or ']'.
+            return jsonst_err_unexpected_char;
         case jsonst_arry_elm_next:
             if (is_ws(c)) {
-                return;
+                return jsonst_success;
             }
             pop(j, (int)jsonst_arry_elm_next);
             assert(j->sp->type == jsonst_arry);
-            push(j, jsonst_arry_elm);
-            expect_start_value(j, c);
-            return;
+            RET_ON_ERR(push(j, jsonst_arry_elm));
+            RET_ON_ERR(expect_start_value(j, c));
+            return jsonst_success;
         case jsonst_obj:
             if (is_ws(c)) {
-                return;
+                return jsonst_success;
             }
             if (c == '}') {
-                emit(j, jsonst_obj_end);
+                RET_ON_ERR(emit(j, jsonst_obj_end));
                 pop(j, jsonst_obj);
-                return;
+                return jsonst_success;
             }
             if (c == '"') {
-                push(j, jsonst_obj_key);
+                RET_ON_ERR(push(j, jsonst_obj_key));
                 j->sp->str = new_s8(&j->sp->a, STR_ALLOC);
-                if (j->sp->str.buf == NULL) {
-                    crash("OOM");
-                }
-                return;
+                RET_OOM_IFNULL(j->sp->str.buf);
+                return jsonst_success;
             }
-            crash("invalid char '%c', expected '\"' or '}'", c);
-            return;
+            // Expected '\"' or '}'.
+            return jsonst_err_unexpected_char;
         case jsonst_obj_post_name:
             if (is_ws(c)) {
-                return;
+                return jsonst_success;
             }
             if (c == ':') {
                 pop(j, (int)jsonst_obj_post_name);
                 assert(j->sp->type == jsonst_obj_key);
-                push(j, (int)jsonst_obj_post_sep);
+                RET_ON_ERR(push(j, (int)jsonst_obj_post_sep));
                 // We now still have the key on the stack one below.
-                return;
+                return jsonst_success;
             }
-            crash("invalid char '%c': expected ':'", c);
-            return;
+            // Expected ':'.
+            return jsonst_err_unexpected_char;
         case jsonst_obj_post_sep:
             if (is_ws(c)) {
-                return;
+                return jsonst_success;
             }
             pop(j, (int)jsonst_obj_post_sep);
             assert(j->sp->type == jsonst_obj_key);
-            push(j, (int)jsonst_obj_next);
-            expect_start_value(j, c);
-            return;
+            RET_ON_ERR(push(j, (int)jsonst_obj_next));
+            RET_ON_ERR(expect_start_value(j, c));
+            return jsonst_success;
         case jsonst_obj_next:
             if (is_ws(c)) {
-                return;
+                return jsonst_success;
             }
             if (c == ',') {
                 pop(j, (int)jsonst_obj_next);
                 pop(j, jsonst_obj_key);
                 assert(j->sp->type == jsonst_obj);
-                return;
+                return jsonst_success;
             }
             if (c == '}') {
                 pop(j, (int)jsonst_obj_next);
                 pop(j, jsonst_obj_key);
-                emit(j, jsonst_obj_end);
+                RET_ON_ERR(emit(j, jsonst_obj_end));
                 pop(j, jsonst_obj);
-                return;
+                return jsonst_success;
             }
-            crash("invalid char '%c', expected ',' or '}'", c);
-            return;
+            // Expected ',' or '}'.
+            return jsonst_err_unexpected_char;
         case jsonst_null:
             if (c != STR_NULL[j->sp->len]) {
-                crash("invalid char '%c', expected 'null' literal", c);
+                return jsonst_err_invalid_literal;
             }
             j->sp->len++;
             if (j->sp->len == STR_NULL_LEN) {
-                emit(j, jsonst_null);
+                RET_ON_ERR(emit(j, jsonst_null));
                 pop(j, jsonst_null);
             }
-            return;
+            return jsonst_success;
         case jsonst_true:
             if (c != STR_TRUE[j->sp->len]) {
-                crash("invalid char '%c', expected 'true' literal", c);
+                return jsonst_err_invalid_literal;
             }
             j->sp->len++;
             if (j->sp->len == STR_TRUE_LEN) {
-                emit(j, jsonst_true);
+                RET_ON_ERR(emit(j, jsonst_true));
                 pop(j, jsonst_true);
             }
-            return;
+            return jsonst_success;
         case jsonst_false:
             if (c != STR_FALSE[j->sp->len]) {
-                crash("invalid char '%c', expected 'false' literal", c);
+                return jsonst_err_invalid_literal;
             }
             j->sp->len++;
             if (j->sp->len == STR_FALSE_LEN) {
-                emit(j, jsonst_false);
+                RET_ON_ERR(emit(j, jsonst_false));
                 pop(j, jsonst_false);
             }
-            return;
+            return jsonst_success;
         case jsonst_str:
         case jsonst_obj_key:
             if (c == '"') {
                 if (j->sp->type == jsonst_str) {
-                    emit(j, 0);
+                    RET_ON_ERR(emit(j, 0));
                     pop(j, jsonst_str);
-                    return;
+                    return jsonst_success;
                 }
                 assert(j->sp->type == jsonst_obj_key);
-                emit(j, jsonst_obj_key);
-                push(j, (int)jsonst_obj_post_name);
+                RET_ON_ERR(emit(j, jsonst_obj_key));
+                RET_ON_ERR(push(j, (int)jsonst_obj_post_name));
                 // We leave the key on the stack for now.
-                return;
+                return jsonst_success;
             }
             if (c == '\\') {
-                push(j, (int)jsonst_str_escp);
-                return;
+                RET_ON_ERR(push(j, (int)jsonst_str_escp));
+                return jsonst_success;
             }
             // Single byte, 0xxxxxxx.
             if (((unsigned char)c & 0x80) == 0) {
                 if (is_cntrl(c)) {
-                    crash("unexpected control character 0x%x", c);
+                    return jsonst_err_invalid_control_char;
                 }
-                frame_buf_putc(j->sp, c);
-                return;
+                RET_ON_ERR(frame_buf_putc(j->sp, c));
+                return jsonst_success;
             }
             // 2 bytes, 110xxxxx.
             if (((unsigned char)c & 0xE0) == 0xC0) {
-                frame_buf_putc(j->sp, c);
-                push(j, (int)jsonst_str_utf8);
+                RET_ON_ERR(frame_buf_putc(j->sp, c));
+                RET_ON_ERR(push(j, (int)jsonst_str_utf8));
                 j->sp->len = 1;  // Remaining bytes for this codepoint.
-                return;
+                return jsonst_success;
             }
             // 3 bytes, 1110xxxx.
             if (((unsigned char)c & 0xF0) == 0xE0) {
-                frame_buf_putc(j->sp, c);
-                push(j, (int)jsonst_str_utf8);
+                RET_ON_ERR(frame_buf_putc(j->sp, c));
+                RET_ON_ERR(push(j, (int)jsonst_str_utf8));
                 j->sp->len = 2;  // Remaining bytes for this codepoint.
-                return;
+                return jsonst_success;
             }
             // 4 bytes, 11110xxx.
             if (((unsigned char)c & 0xF8) == 0xF0) {
-                frame_buf_putc(j->sp, c);
-                push(j, (int)jsonst_str_utf8);
+                RET_ON_ERR(frame_buf_putc(j->sp, c));
+                RET_ON_ERR(push(j, (int)jsonst_str_utf8));
                 j->sp->len = 3;  // Remaining bytes for this codepoint.
-                return;
+                return jsonst_success;
             }
-            crash("unhandled string char 0x%x", c);
-            return;
+            return jsonst_err_invalid_utf8_encoding;
         case jsonst_str_escp:
             if (c == 'u') {
-                push(j, (int)jsonst_str_escp_uhex);
+                RET_ON_ERR(push(j, (int)jsonst_str_escp_uhex));
                 j->sp->str = new_s8(&j->sp->a, 4);
-                if (j->sp->str.buf == NULL) {
-                    crash("OOM");
-                }
-                return;
+                RET_OOM_IFNULL(j->sp->str.buf);
+                return jsonst_success;
             }
             const char unquoted = is_quotable(c);
             if (unquoted != 0) {
                 // Write to underlying string buffer.
                 assert(j->sp->prev->type == jsonst_str || j->sp->prev->type == jsonst_obj_key);
-                frame_buf_putc(j->sp->prev, unquoted);
+                RET_ON_ERR(frame_buf_putc(j->sp->prev, unquoted));
                 pop(j, (int)jsonst_str_escp);
-                return;
+                return jsonst_success;
             }
-            crash("invalid quoted char %c 0x%x", c, c);
-            return;
+            return jsonst_err_invalid_quoted_char;
         case jsonst_str_utf8:
             // Check that conforms to 10xxxxxx.
             if (((unsigned char)c & 0xC0) != 0x80) {
-                crash("invalid utf8-encoding, expected 0b10xxxxxx but got 0x%x", c);
+                return jsonst_err_invalid_utf8_encoding;
             }
             // Write to underlying string buffer.
             assert(j->sp->prev->type == jsonst_str || j->sp->prev->type == jsonst_obj_key);
-            frame_buf_putc(j->sp->prev, c);
+            RET_ON_ERR(frame_buf_putc(j->sp->prev, c));
 
             j->sp->len--;
             if (j->sp->len == 0) {
                 pop(j, (int)jsonst_str_utf8);
             }
-            return;
+            return jsonst_success;
         case jsonst_str_escp_uhex:
             assert(j->sp->prev->type == jsonst_str_escp);
             assert(j->sp->prev->prev->type == jsonst_str ||
                    j->sp->prev->prev->type == jsonst_obj_key);
             if (!is_xdigit(c)) {
-                crash("expected hex digit but got '%c'", c);
-                return;
+                return jsonst_err_invalid_hex_digit;
             }
-            frame_buf_putc(j->sp, c);
+            RET_ON_ERR(frame_buf_putc(j->sp, c));
             if (j->sp->len < 4) {
-                return;
+                return jsonst_success;
             }
 
             const uint32_t n = parse_hex4(j->sp->str);
             if (is_utf16_high_surrogate(n)) {
-                push(j, (int)jsonst_str_escp_uhex_utf16);
+                RET_ON_ERR(push(j, (int)jsonst_str_escp_uhex_utf16));
                 j->sp->str = new_s8(&j->sp->a, 4);
-                if (j->sp->str.buf == NULL) {
-                    crash("OOM");
-                }
+                RET_OOM_IFNULL(j->sp->str.buf);
                 j->sp->len = -2;  // Eat the \u sequence
             } else {
-                utf8_encode(j->sp->prev->prev, n);
+                RET_ON_ERR(utf8_encode(j->sp->prev->prev, n));
                 pop(j, (int)jsonst_str_escp_uhex);
                 pop(j, (int)jsonst_str_escp);
             }
-            return;
+            return jsonst_success;
         case jsonst_str_escp_uhex_utf16:
             assert(j->sp->prev->type == jsonst_str_escp_uhex);
             assert(j->sp->prev->prev->type == jsonst_str_escp);
@@ -611,59 +592,78 @@ static void feed(_jsonst *j, const char c) {
 
             if (j->sp->len == -2 && c == '\\') {
                 j->sp->len++;
-                return;
+                return jsonst_success;
             }
             if (j->sp->len == -1 && c == 'u') {
                 j->sp->len++;
-                return;
+                return jsonst_success;
             }
             if (j->sp->len < 0) {
-                crash("expected 2nd surrogate pair member but received '%c' = %d", c);
-                return;
+                return jsonst_err_invalid_utf16_surrogate;
             }
 
             if (!is_xdigit(c)) {
-                crash("expected hex digit but got '%c'", c);
-                return;
+                return jsonst_err_invalid_hex_digit;
             }
-            frame_buf_putc(j->sp, c);
+            RET_ON_ERR(frame_buf_putc(j->sp, c));
             if (j->sp->len < 4) {
-                return;
+                return jsonst_success;
             }
 
             {
                 const uint32_t low = parse_hex4(j->sp->str);
                 if (!is_utf16_low_surrogate(low)) {
-                    crash("not a utf16 low surrogate: %d", low);
+                    return jsonst_err_invalid_utf16_surrogate;
                 }
                 const uint32_t high = parse_hex4(j->sp->prev->str);
                 assert(is_utf16_high_surrogate(high));
 
                 const uint32_t decoded = ((high - 0xd800) << 10 | (low - 0xdc00)) + 0x10000;
 
-                utf8_encode(j->sp->prev->prev->prev, decoded);
+                RET_ON_ERR(utf8_encode(j->sp->prev->prev->prev, decoded));
                 pop(j, (int)jsonst_str_escp_uhex_utf16);
                 pop(j, (int)jsonst_str_escp_uhex);
                 pop(j, (int)jsonst_str_escp);
-                return;
+                return jsonst_success;
             }
         case jsonst_num:
             if (!is_num(c)) {
-                emit(j, jsonst_num);
+                RET_ON_ERR(emit(j, jsonst_num));
                 pop(j, jsonst_num);
 
                 // Numbers are the only type delimited by a char which already belongs to the next
                 // token. Thus, we have feed that token to the parser again.
-                feed(j, c);
+                RET_ON_ERR(feed(j, c));
 
-                return;
+                return jsonst_success;
             }
-            // One day, maybe do proper parsing instead of leaving the work to strtof.
-            frame_buf_putc(j->sp, c);
-            return;
+            // One day, maybe do proper parsing instead of leaving all the work to strtof.
+            RET_ON_ERR(frame_buf_putc(j->sp, c));
+            return jsonst_success;
         default:
-            crash("feed(): unhandled type '%c' = %d", j->sp->type, j->sp->type);
+            assert(false);
+            return jsonst_err_internal_bug;
     }
 }
 
-void jsonst_feed(jsonst j, const char c) { feed(j, c); }
+jsonst_error jsonst_feed(jsonst j, const char c) {
+    if (j->failed != jsonst_success) {
+        return jsonst_err_previous_error;
+    }
+
+    const jsonst_error ret = feed(j, c);
+    if (ret != jsonst_success) {
+        j->failed = ret;
+    }
+    return ret;
+}
+
+jsonst_error jsonst_feed_doc(jsonst j, const char *doc, const ptrdiff_t docsz) {
+    for (ptrdiff_t i = 0; i < docsz; i++) {
+        const jsonst_error ret = jsonst_feed(j, doc[i]);
+        if (ret != jsonst_success) {
+            return ret;
+        }
+    }
+    return jsonst_feed(j, EOF);
+}

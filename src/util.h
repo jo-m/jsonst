@@ -32,10 +32,8 @@ arena new_scratch(arena *a, ptrdiff_t cap);
 #define s8(s) \
     (s8) { (char *)s, lengthof(s) }
 
-// Inspired by https://nullprogram.com/blog/2023/10/08/, with a modification
-// for interop with other C code:
-// Guaranteed to always be null terminated, but the length field is excluding the
-// terminating 0 byte.
+// Inspired by https://nullprogram.com/blog/2023/10/08/, modified to always be null byte terminated.
+// The length field is excluding the 0 byte.
 typedef struct {
     char *buf;
     ptrdiff_t len;

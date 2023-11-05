@@ -71,8 +71,33 @@ typedef struct _jsonst* jsonst;
 // Might return NULL on OOM.
 // To reset an instance to parse a new doc after EOF has been reached,
 // simply call new_jsonst() again, with the same mem used previously.
-jsonst new_jsonst(uint8_t* mem, const ptrdiff_t memsz, jsonst_value_cb cb);
+jsonst new_jsonst(uint8_t* mem, const ptrdiff_t memsz, jsonst_value_cb cb)
+    __attribute((warn_unused_result));
 
-// At the end of your input, you MUST call this method once with c = EOF.
-// Otherwise, it might fail to emit tokens at the end.
-void jsonst_feed(jsonst j, char c);
+typedef enum {
+    jsonst_success = 0,
+
+    jsonst_err_oom,
+    jsonst_err_str_buffer_full,
+    jsonst_err_previous_error,
+    jsonst_err_internal_bug,
+    jsonst_err_end_of_doc,
+
+    jsonst_err_expected_new_value,
+    jsonst_err_unexpected_char,
+    jsonst_err_invalid_literal,
+    jsonst_err_invalid_control_char,
+    jsonst_err_invalid_quoted_char,
+    jsonst_err_invalid_hex_digit,
+    jsonst_err_invalid_utf8_encoding,
+    jsonst_err_invalid_number,
+    jsonst_err_invalid_unicode_codepoint,
+    jsonst_err_invalid_utf16_surrogate,
+
+} jsonst_error;
+
+// At the end of your input, you must call this method once with c = EOF.
+jsonst_error jsonst_feed(jsonst j, char c) __attribute((warn_unused_result));
+
+jsonst_error jsonst_feed_doc(jsonst j, const char* doc, const ptrdiff_t docsz)
+    __attribute((warn_unused_result));
