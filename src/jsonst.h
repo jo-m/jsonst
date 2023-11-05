@@ -67,7 +67,7 @@ typedef struct _jsonst* jsonst;
 // Default values for jsonst_config.
 #define JSONST_DEFAULT_STR_ALLOC_BYTES (ptrdiff_t)128
 #define JSONST_DEFAULT_OBJ_KEY_ALLOC_BYTES (ptrdiff_t)128
-#define JSONST_DEFAULT_NUM_ALLOC_BYTES (ptrdiff_t)64
+#define JSONST_DEFAULT_NUM_ALLOC_BYTES (ptrdiff_t)128
 
 // Configuration values for jsonst.
 // A zero-initialized struct is valid and will use the defaults.

@@ -72,6 +72,99 @@ static jsonst_error frame_buf_putc(frame *f, const char c) {
     return jsonst_success;
 }
 
+static bool is_digit(const char c);
+
+typedef enum {
+    num_init,
+    num_int_minus,
+    num_int_zero,
+    num_int_digit,
+    num_int_dot,
+    num_int_frac,
+    num_exp_e,
+    num_exp_sign,
+    num_exp_int,
+} number_state;
+
+// Check for some stuff which strtod accepts which are not valid JSON.
+// By not directly integrating this into the parsing state machine we waste
+// a bit of performance, but it's much easier to read.
+static bool is_valid_json_number(const char *buf, const ptrdiff_t len) {
+    number_state s = num_init;
+    for (ptrdiff_t i = 0; i < len; i++) {
+        const char c = buf[i];
+        switch (s) {
+            case num_init:
+                if (c == '-') {
+                    s = num_int_minus;
+                    continue;
+                }
+                if (c == '0') {
+                    s = num_int_zero;
+                    continue;
+                }
+                if (!is_digit(c)) return false;
+                s = num_int_digit;
+                continue;
+            case num_int_minus:
+                if (c == '0') {
+                    s = num_int_zero;
+                    continue;
+                }
+                if (!is_digit(c)) return false;
+                s = num_int_digit;
+                continue;
+            case num_int_zero:
+                if (is_digit(c)) return false;
+                if (c == '.') {
+                    s = num_int_dot;
+                    continue;
+                }
+                if (c == 'E' || c == 'e') {
+                    s = num_exp_e;
+                    continue;
+                }
+                return false;
+            case num_int_digit:
+                if (is_digit(c)) continue;
+                if (c == '.') {
+                    s = num_int_dot;
+                    continue;
+                }
+                if (c == 'E' || c == 'e') {
+                    s = num_exp_e;
+                    continue;
+                }
+                return false;
+            case num_int_dot:
+                if (!is_digit(c)) return false;
+                s = num_int_frac;
+                continue;
+            case num_int_frac:
+                if (is_digit(c)) continue;
+                if (c != 'E' && c != 'e') return false;
+                s = num_exp_e;
+                continue;
+            case num_exp_e:
+                if (c == '-' || c == '+') {
+                    s = num_exp_sign;
+                    continue;
+                }
+                if (!is_digit(c) || c == '0') return false;
+                s = num_exp_int;
+                continue;
+            case num_exp_sign:
+                if (!is_digit(c) || c == '0') return false;
+                s = num_exp_int;
+                continue;
+            case num_exp_int:
+                if (!is_digit(c)) return false;
+        }
+    }
+
+    return s == num_int_zero || s == num_int_digit || s == num_int_frac || s == num_exp_int;
+}
+
 static jsonst_error emit(const _jsonst *j, const jsonst_type /* or jsonst_internal_state */ type)
     __attribute((warn_unused_result));
 static jsonst_error emit(const _jsonst *j, const jsonst_type /* or jsonst_internal_state */ type) {
@@ -83,6 +176,9 @@ static jsonst_error emit(const _jsonst *j, const jsonst_type /* or jsonst_intern
     switch (type) {
         case jsonst_num: {
             assert(j->sp->type == jsonst_num);
+            if (!is_valid_json_number(j->sp->str.buf, j->sp->len)) {
+                return jsonst_err_invalid_number;
+            }
             char *endptr;
             v->val_num = j->config.strtod(j->sp->str.buf, &endptr);
             if (endptr != j->sp->str.buf + j->sp->len) {
@@ -195,7 +291,7 @@ static bool is_num(const char c) {
     return false;
 }
 
-static bool is_cntrl(const char c) { return (c >= 0x00 && c <= 0x1F) || c == 0x7F; }
+static bool is_cntrl(const char c) { return c >= 0x00 && c <= 0x1F; }
 
 static bool is_utf16_high_surrogate(const uint32_t c) { return c >= 0xD800 && c < 0xDC00; }
 
