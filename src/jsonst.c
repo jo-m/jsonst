@@ -77,7 +77,7 @@ static jsonst_error emit(const _jsonst *j, const jsonst_type /* or jsonst_intern
         case jsonst_obj_key:
             assert(j->sp->type == jsonst_str || j->sp->type == jsonst_obj_key);
             v->val_str.str = j->sp->str.buf;
-            v->val_str.str_len = j->sp->str.len;
+            v->val_str.str_len = j->sp->len;
             break;
         default:
             // Nothing else to do for the others.
@@ -108,7 +108,7 @@ static jsonst_error emit(const _jsonst *j, const jsonst_type /* or jsonst_intern
                 break;
             case jsonst_obj_key:
                 p_new->props.obj_key.str = f->str.buf;
-                p_new->props.obj_key.str_len = f->str.len;
+                p_new->props.obj_key.str_len = f->len;
                 break;
         }
 
@@ -467,7 +467,7 @@ static jsonst_error feed(_jsonst *j, const char c) {
         case jsonst_obj_key:
             if (c == '"') {
                 if (j->sp->type == jsonst_str) {
-                    RET_ON_ERR(emit(j, 0));
+                    RET_ON_ERR(emit(j, jsonst_str));
                     pop(j, jsonst_str);
                     return jsonst_success;
                 }
