@@ -64,10 +64,20 @@ typedef void (*jsonst_value_cb)(const jsonst_value* value, const jsonst_path* p)
 // Opaque handle.
 typedef struct _jsonst* jsonst;
 
-// jsonpath on/off, int parsing, max key size, max string size
+// Default values for jsonst_config.
+#define JSONST_DEFAULT_STR_ALLOC_BYTES (ptrdiff_t)128
+#define JSONST_DEFAULT_OBJ_KEY_ALLOC_BYTES (ptrdiff_t)128
+#define JSONST_DEFAULT_NUM_ALLOC_BYTES (ptrdiff_t)64
 
+// Configuration values for jsonst.
+// A zero-initialized struct is valid and will use the defaults.
 typedef struct {
-    ptrdiff_t obj_key_max_size;
+    // Max size in bytes for string values.
+    ptrdiff_t str_alloc_bytes;
+    // Max size in bytes for object keys.
+    ptrdiff_t obj_key_alloc_bytes;
+    // Max size in bytes for numbers before parsing.
+    ptrdiff_t num_alloc_bytes;
 } jsonst_config;
 
 // Will take ownership of mem (with size memsz) and use it for processing.
@@ -76,7 +86,8 @@ typedef struct {
 // Might return NULL on OOM.
 // To reset an instance to parse a new doc after EOF has been reached,
 // simply call new_jsonst() again, with the same mem used previously.
-jsonst new_jsonst(uint8_t* mem, const ptrdiff_t memsz, const jsonst_value_cb cb);
+jsonst new_jsonst(uint8_t* mem, const ptrdiff_t memsz, const jsonst_value_cb cb,
+                  const jsonst_config conf);
 
 typedef enum {
     jsonst_success = 0,
@@ -108,7 +119,7 @@ jsonst_error jsonst_feed(jsonst j, const char c);
 typedef struct {
     jsonst_error err;
     // Number of chars consumed.
-    size_t n_chars;
+    size_t parsed_chars;
 } jsonst_feed_doc_ret;
 
 jsonst_feed_doc_ret jsonst_feed_doc(jsonst j, const char* doc, const size_t docsz);

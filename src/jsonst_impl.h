@@ -9,9 +9,6 @@
 #define STR_FALSE "false"
 #define STR_FALSE_LEN (sizeof(STR_FALSE) - 1)
 
-#define STR_ALLOC (ptrdiff_t)128
-#define NUM_STR_ALLOC (ptrdiff_t)64
-
 // In most places where jsonst_type is used, jsonst_internal_state may also be used.
 // Thus, we need to be careful to no accidentally introduce overlaps.
 typedef enum {
@@ -33,8 +30,6 @@ struct frame {
     int type;  // Is a jsonst_type or jsonst_internal_state.
     arena a;
 
-    uint32_t input_counter;
-
     // Processing state, usage depends on type.
     // Some types will use len separately without str.
     s8 str;
@@ -44,6 +39,7 @@ struct frame {
 typedef struct _jsonst _jsonst;
 typedef struct _jsonst {
     jsonst_value_cb cb;
+    jsonst_config config;
     jsonst_error failed;
     frame *sp;
 } _jsonst;

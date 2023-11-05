@@ -63,7 +63,8 @@ int main(void) {
 
     printf("%s\n", doc);
 
-    jsonst j = new_jsonst(mem, memsz, cb);
+    jsonst_config conf = {0};
+    jsonst j = new_jsonst(mem, memsz, cb, conf);
     const jsonst_feed_doc_ret ret = jsonst_feed_doc(j, doc, sizeof(doc) - 1);
     assert(ret.err == jsonst_success);
 

@@ -21,7 +21,8 @@ static frame *new_frame(arena *a, frame *prev,
     return f;
 }
 
-static _jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_value_cb cb) {
+static _jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_value_cb cb,
+                            const jsonst_config conf) {
     arena a = new_arena(mem, memsz);
     jsonst j = new (&a, _jsonst, 1);
     if (j == NULL) {
@@ -30,6 +31,17 @@ static _jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_va
 
     assert(cb != NULL);
     j->cb = cb;
+
+    j->config = conf;
+    if (j->config.str_alloc_bytes == 0) {
+        j->config.str_alloc_bytes = JSONST_DEFAULT_STR_ALLOC_BYTES;
+    }
+    if (j->config.obj_key_alloc_bytes == 0) {
+        j->config.obj_key_alloc_bytes = JSONST_DEFAULT_OBJ_KEY_ALLOC_BYTES;
+    }
+    if (j->config.num_alloc_bytes == 0) {
+        j->config.num_alloc_bytes = JSONST_DEFAULT_NUM_ALLOC_BYTES;
+    }
 
     j->failed = jsonst_success;
 
@@ -41,8 +53,9 @@ static _jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_va
     return j;
 }
 
-jsonst new_jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_value_cb cb) {
-    return new__jsonst(mem, memsz, cb);
+jsonst new_jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_value_cb cb,
+                  const jsonst_config conf) {
+    return new__jsonst(mem, memsz, cb, conf);
 }
 
 static jsonst_error frame_buf_putc(frame *f, const char c) __attribute((warn_unused_result));
@@ -273,13 +286,13 @@ static jsonst_error expect_start_value(_jsonst *j, const char c) {
             return jsonst_success;
         case '"':
             RET_ON_ERR(push(j, jsonst_str));
-            j->sp->str = new_s8(&j->sp->a, STR_ALLOC);
+            j->sp->str = new_s8(&j->sp->a, j->config.str_alloc_bytes);
             RET_OOM_IFNULL(j->sp->str.buf);
             return jsonst_success;
         default:
             if (is_digit(c) || c == '-') {
                 RET_ON_ERR(push(j, jsonst_num));
-                j->sp->str = new_s8(&j->sp->a, NUM_STR_ALLOC);
+                j->sp->str = new_s8(&j->sp->a, j->config.num_alloc_bytes);
                 RET_OOM_IFNULL(j->sp->str.buf);
                 RET_ON_ERR(frame_buf_putc(j->sp, c));
                 return jsonst_success;
@@ -386,7 +399,7 @@ static jsonst_error feed(_jsonst *j, const char c) {
             }
             if (c == '"') {
                 RET_ON_ERR(push(j, jsonst_obj_key));
-                j->sp->str = new_s8(&j->sp->a, STR_ALLOC);
+                j->sp->str = new_s8(&j->sp->a, j->config.obj_key_alloc_bytes);
                 RET_OOM_IFNULL(j->sp->str.buf);
                 return jsonst_success;
             }
@@ -642,8 +655,8 @@ jsonst_error jsonst_feed(jsonst j, const char c) {
 jsonst_feed_doc_ret jsonst_feed_doc(jsonst j, const char *doc, const size_t docsz) {
     jsonst_feed_doc_ret ret = {0};
 
-    for (ret.n_chars = 0; ret.n_chars < docsz; ret.n_chars++) {
-        ret.err = jsonst_feed(j, doc[ret.n_chars]);
+    for (ret.parsed_chars = 0; ret.parsed_chars < docsz; ret.parsed_chars++) {
+        ret.err = jsonst_feed(j, doc[ret.parsed_chars]);
         if (ret.err != jsonst_success) {
             return ret;
         }
