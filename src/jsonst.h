@@ -78,6 +78,9 @@ typedef struct {
     ptrdiff_t obj_key_alloc_bytes;
     // Max size in bytes for numbers before parsing.
     ptrdiff_t num_alloc_bytes;
+    // A strtod implementation to use.
+    // Must have exactly the same semantics as libc's strtod.
+    double (*strtod)(const char* nptr, char** endptr);
 } jsonst_config;
 
 // Will take ownership of mem (with size memsz) and use it for processing.

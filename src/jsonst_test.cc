@@ -1,6 +1,8 @@
 #include <gtest/gtest-spi.h>
 #include <gtest/gtest.h>
 
+#include <cstring>
+
 extern "C" {
 #include "jsonst.h"
 }
@@ -12,7 +14,7 @@ TEST(JsonstTest, ErrorLivecycle) {
     uint8_t *mem = new uint8_t[DEFAULT_MEMSZ];
     ASSERT_NE(mem, nullptr);
 
-    jsonst_config conf = {0, 0, 0};
+    jsonst_config conf = {0, 0, 0, nullptr};
     jsonst j = new_jsonst(mem, DEFAULT_MEMSZ, null_cb, conf);
     EXPECT_EQ(jsonst_success, jsonst_feed(j, '{'));
     EXPECT_EQ(jsonst_success, jsonst_feed(j, '}'));
@@ -27,59 +29,87 @@ TEST(JsonstTest, NoCb) {
     uint8_t *mem = new uint8_t[DEFAULT_MEMSZ];
     EXPECT_NE(mem, nullptr);
 
-    jsonst_config conf = {0, 0, 0};
+    jsonst_config conf = {0, 0, 0, nullptr};
     ASSERT_DEATH(new_jsonst(mem, DEFAULT_MEMSZ, NULL, conf), "cb != NULL");
 }
 
 TEST(JsonstTest, ConfigAllocStr) {
-    uint8_t *mem = new uint8_t[DEFAULT_MEMSZ];
-    ASSERT_NE(mem, nullptr);
+    jsonst_config conf = {2, 0, 0, nullptr};
 
-    jsonst_config conf = {2, 0, 0};
-    jsonst j = new_jsonst(mem, DEFAULT_MEMSZ, null_cb, conf);
-    std::string doc = R"("12")";
-    auto ret = jsonst_feed_doc(j, doc.c_str(), doc.length());
-    EXPECT_EQ(jsonst_success, ret.err);
-    EXPECT_EQ(doc.length(), ret.parsed_chars);
+    EXPECT_EQ(R"(
+$=(jsonst_str)'12'
+ret=jsonst_success
+parsed_chars=4
+)",
+              parse_doc_to_txt(DEFAULT_MEMSZ, R"("12")", conf));
 
-    j = new_jsonst(mem, DEFAULT_MEMSZ, null_cb, conf);
-    doc = R"("123")";
-    ret = jsonst_feed_doc(j, doc.c_str(), doc.length());
-    EXPECT_EQ(jsonst_err_str_buffer_full, ret.err);
+    EXPECT_EQ(R"(
+ret=jsonst_err_str_buffer_full
+parsed_chars=3
+)",
+              parse_doc_to_txt(DEFAULT_MEMSZ, R"("123")", conf));
 }
 
 TEST(JsonstTest, ConfigAllocObjKey) {
-    uint8_t *mem = new uint8_t[DEFAULT_MEMSZ];
-    ASSERT_NE(mem, nullptr);
+    jsonst_config conf = {0, 3, 0, nullptr};
 
-    jsonst_config conf = {0, 3, 0};
-    jsonst j = new_jsonst(mem, DEFAULT_MEMSZ, null_cb, conf);
-    std::string doc = R"({"123":true})";
-    auto ret = jsonst_feed_doc(j, doc.c_str(), doc.length());
-    EXPECT_EQ(jsonst_success, ret.err);
-    EXPECT_EQ(doc.length(), ret.parsed_chars);
+    EXPECT_EQ(R"(
+$=(jsonst_obj)
+$.123=(jsonst_obj_key)'123'
+$.123=jsonst_true
+$=(jsonst_obj_end)
+ret=jsonst_success
+parsed_chars=12
+)",
+              parse_doc_to_txt(DEFAULT_MEMSZ, R"({"123":true})", conf));
 
-    j = new_jsonst(mem, DEFAULT_MEMSZ, null_cb, conf);
-    doc = R"({"1234":true})";
-    ret = jsonst_feed_doc(j, doc.c_str(), doc.length());
-    EXPECT_EQ(jsonst_err_str_buffer_full, ret.err);
+    EXPECT_EQ(R"(
+$=(jsonst_obj)
+ret=jsonst_err_str_buffer_full
+parsed_chars=5
+)",
+              parse_doc_to_txt(DEFAULT_MEMSZ, R"({"1234":true})", conf));
 }
 
 TEST(JsonstTest, ConfigAllocNum) {
-    uint8_t *mem = new uint8_t[DEFAULT_MEMSZ];
-    ASSERT_NE(mem, nullptr);
+    jsonst_config conf = {0, 0, 4, nullptr};
 
-    jsonst_config conf = {0, 0, 4};
-    jsonst j = new_jsonst(mem, DEFAULT_MEMSZ, null_cb, conf);
-    std::string doc = R"(1234)";
-    auto ret = jsonst_feed_doc(j, doc.c_str(), doc.length());
-    EXPECT_EQ(jsonst_success, ret.err);
-    EXPECT_EQ(doc.length(), ret.parsed_chars);
+    EXPECT_EQ(R"(
+$=(jsonst_num)1234
+ret=jsonst_success
+parsed_chars=4
+)",
+              parse_doc_to_txt(DEFAULT_MEMSZ, R"(1234)", conf));
 
-    j = new_jsonst(mem, DEFAULT_MEMSZ, null_cb, conf);
-    doc = R"(12345)";
-    ret = jsonst_feed_doc(j, doc.c_str(), doc.length());
-    EXPECT_EQ(jsonst_err_str_buffer_full, ret.err);
+    EXPECT_EQ(R"(
+ret=jsonst_err_str_buffer_full
+parsed_chars=4
+)",
+              parse_doc_to_txt(DEFAULT_MEMSZ, R"(12345)", conf));
+}
+
+double my_real_strtod(const char *nptr, char **endptr) { return strtod(nptr, endptr); }
+
+double my_strtod(const char __attribute((unused)) * nptr, char __attribute((unused)) * *endptr) {
+    return 4444;
+}
+
+TEST(JsonstTest, ConfigStrtod) {
+    jsonst_config conf = {0, 0, 0, my_strtod};
+    EXPECT_EQ(R"(
+$=(jsonst_num)4444
+ret=jsonst_success
+parsed_chars=4
+)",
+              parse_doc_to_txt(DEFAULT_MEMSZ, R"(1111)", conf));
+
+    conf = {0, 0, 0, strtod};
+    EXPECT_EQ(R"(
+$=(jsonst_num)1111
+ret=jsonst_success
+parsed_chars=4
+)",
+              parse_doc_to_txt(DEFAULT_MEMSZ, R"(1111)", conf));
 }
 
 TEST(JsonstTest, Null) {

@@ -15,7 +15,7 @@ jsonst_error parse_doc_to_err(const ptrdiff_t memsz, const std::string doc) {
     uint8_t *mem = new uint8_t[memsz];
     EXPECT_NE(mem, nullptr);
 
-    jsonst_config conf = {0, 0, 0};
+    jsonst_config conf = {0, 0, 0, nullptr};
     jsonst j = new_jsonst(mem, memsz, null_cb, conf);
     EXPECT_NE(j, nullptr);
 
@@ -77,14 +77,14 @@ void ost_cb(const jsonst_value *value, const jsonst_path *path) {
     o << std::endl;
 }
 
-std::string parse_doc_to_txt(const ptrdiff_t memsz, const std::string doc) {
+std::string parse_doc_to_txt(const ptrdiff_t memsz, const std::string doc,
+                             const jsonst_config conf) {
     o.str("");
     o.clear();
     o << std::endl;
 
     uint8_t *mem = new uint8_t[memsz];
     EXPECT_NE(mem, nullptr);
-    jsonst_config conf = {0, 0, 0};
     jsonst j = new_jsonst(mem, memsz, ost_cb, conf);
     EXPECT_NE(j, nullptr);
 

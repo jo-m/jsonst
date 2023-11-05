@@ -42,6 +42,9 @@ static _jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_va
     if (j->config.num_alloc_bytes == 0) {
         j->config.num_alloc_bytes = JSONST_DEFAULT_NUM_ALLOC_BYTES;
     }
+    if (j->config.strtod == NULL) {
+        j->config.strtod = strtod;
+    }
 
     j->failed = jsonst_success;
 
@@ -81,7 +84,7 @@ static jsonst_error emit(const _jsonst *j, const jsonst_type /* or jsonst_intern
         case jsonst_num: {
             assert(j->sp->type == jsonst_num);
             char *endptr;
-            v->val_num = strtod(j->sp->str.buf, &endptr);
+            v->val_num = j->config.strtod(j->sp->str.buf, &endptr);
             if (endptr != j->sp->str.buf + j->sp->len) {
                 return jsonst_err_invalid_number;
             }
