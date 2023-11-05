@@ -3,9 +3,25 @@
 #include <stdlib.h>
 
 #include "src/jsonst.h"
-#include "src/jsonst_helpers.h"
+#include "src/jsonst_util.h"
 
 static const char doc[] = "{ \"key0\":[1,2,3,{\"key1\":false}] }";
+
+static void jsonst_path_print(const jsonst_path *path) {
+    printf("$");
+    for (const jsonst_path *p = path; p != NULL; p = p->next) {
+        switch (p->type) {
+            case jsonst_arry_elm:
+                printf("[%d]", p->props.arry_ix);
+                break;
+            case jsonst_obj_key:
+                printf("['%.*s']", (int)p->props.obj_key.str_len, p->props.obj_key.str);
+                break;
+            default:
+                break;
+        }
+    }
+}
 
 static void cb(const jsonst_value *value, const jsonst_path *p) {
     jsonst_path_print(p);
@@ -48,8 +64,8 @@ int main(void) {
     printf("%s\n", doc);
 
     jsonst j = new_jsonst(mem, memsz, cb);
-    const jsonst_error ret = jsonst_feed_doc(j, doc, sizeof(doc) - 1);
-    assert(ret == jsonst_success);
+    const jsonst_feed_doc_ret ret = jsonst_feed_doc(j, doc, sizeof(doc) - 1);
+    assert(ret.err == jsonst_success);
 
     free(mem);
     return EXIT_SUCCESS;

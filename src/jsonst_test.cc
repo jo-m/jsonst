@@ -3,33 +3,16 @@
 
 extern "C" {
 #include "jsonst.h"
-#include "jsonst_helpers.h"
 }
-
-static void cb(const jsonst_value *value, const jsonst_path __attribute((unused)) * p) {
-    printf("jsonst_value_cb(%d, %s)\n", value->type, jsonst_type_to_str(value->type));
-}
+#include "jsonst_test_util.h"
 
 #define DEFAULT_MEMSZ (8 * 1024)
 
-static void parse_doc(const ptrdiff_t memsz, const std::string doc) {
-    uint8_t *mem = new uint8_t[memsz];
-    EXPECT_NE(mem, nullptr);
-
-    jsonst j = new_jsonst(mem, memsz, cb);
-    EXPECT_NE(j, nullptr);
-
-    const jsonst_error ret = jsonst_feed_doc(j, doc.c_str(), doc.length());
-    EXPECT_EQ(ret, jsonst_success);
-
-    free(mem);
-}
-
 TEST(JsonstTest, ErrorLivecycle) {
     uint8_t *mem = new uint8_t[DEFAULT_MEMSZ];
-    EXPECT_NE(mem, nullptr);
+    ASSERT_NE(mem, nullptr);
 
-    jsonst j = new_jsonst(mem, DEFAULT_MEMSZ, cb);
+    jsonst j = new_jsonst(mem, DEFAULT_MEMSZ, null_cb);
     EXPECT_EQ(jsonst_success, jsonst_feed(j, '{'));
     EXPECT_EQ(jsonst_success, jsonst_feed(j, '}'));
     EXPECT_EQ(jsonst_success, jsonst_feed(j, JSONST_EOF));
@@ -47,99 +30,115 @@ TEST(JsonstTest, NoCb) {
 }
 
 TEST(JsonstTest, Null) {
-    parse_doc(DEFAULT_MEMSZ, " null");
-    parse_doc(DEFAULT_MEMSZ, "  null ");
+    expect_jsonst_success(DEFAULT_MEMSZ, " null");
+    expect_jsonst_success(DEFAULT_MEMSZ, "  null ");
 }
 
 TEST(JsonstTest, Bool) {
-    parse_doc(DEFAULT_MEMSZ, "true");
-    parse_doc(DEFAULT_MEMSZ, " true ");
-    parse_doc(DEFAULT_MEMSZ, "false");
-    parse_doc(DEFAULT_MEMSZ, " false ");
+    expect_jsonst_success(DEFAULT_MEMSZ, "true");
+    expect_jsonst_success(DEFAULT_MEMSZ, " true ");
+    expect_jsonst_success(DEFAULT_MEMSZ, "false");
+    expect_jsonst_success(DEFAULT_MEMSZ, " false ");
 }
 
 TEST(JsonstTest, Num) {
-    parse_doc(DEFAULT_MEMSZ, "0");
-    parse_doc(DEFAULT_MEMSZ, "0 ");
-    parse_doc(DEFAULT_MEMSZ, "1");
-    parse_doc(DEFAULT_MEMSZ, " 1");
-    parse_doc(DEFAULT_MEMSZ, " 1 ");
-    parse_doc(DEFAULT_MEMSZ, "1 ");
-    parse_doc(DEFAULT_MEMSZ, "123");
-    parse_doc(DEFAULT_MEMSZ, "123 ");
-    parse_doc(DEFAULT_MEMSZ, " 123");
-    parse_doc(DEFAULT_MEMSZ, " 123 ");
-    parse_doc(DEFAULT_MEMSZ, " 0.0 ");
-    parse_doc(DEFAULT_MEMSZ, " 0.1 ");
-    parse_doc(DEFAULT_MEMSZ, " 0.1234 ");
-    parse_doc(DEFAULT_MEMSZ, " 1.1234 ");
-    parse_doc(DEFAULT_MEMSZ, " 0.1234 ");
+    expect_jsonst_success(DEFAULT_MEMSZ, "0");
+    expect_jsonst_success(DEFAULT_MEMSZ, "0 ");
+    expect_jsonst_success(DEFAULT_MEMSZ, "1");
+    expect_jsonst_success(DEFAULT_MEMSZ, " 1");
+    expect_jsonst_success(DEFAULT_MEMSZ, " 1 ");
+    expect_jsonst_success(DEFAULT_MEMSZ, "1 ");
+    expect_jsonst_success(DEFAULT_MEMSZ, "123");
+    expect_jsonst_success(DEFAULT_MEMSZ, "123 ");
+    expect_jsonst_success(DEFAULT_MEMSZ, " 123");
+    expect_jsonst_success(DEFAULT_MEMSZ, " 123 ");
+    expect_jsonst_success(DEFAULT_MEMSZ, " 0.0 ");
+    expect_jsonst_success(DEFAULT_MEMSZ, " 0.1 ");
+    expect_jsonst_success(DEFAULT_MEMSZ, " 0.1234 ");
+    expect_jsonst_success(DEFAULT_MEMSZ, " 1.1234 ");
+    expect_jsonst_success(DEFAULT_MEMSZ, " 0.1234 ");
 }
 
 TEST(JsonstTest, Str) {
-    parse_doc(DEFAULT_MEMSZ, "\"\"");
-    parse_doc(DEFAULT_MEMSZ, "\"a\"");
-    parse_doc(DEFAULT_MEMSZ, "\"a\" ");
-    parse_doc(DEFAULT_MEMSZ, " \"a\" ");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"("")");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"("a")");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"("a" )");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"( "a" )");
 }
 
 TEST(JsonstTest, StrUTF8) {
-    parse_doc(DEFAULT_MEMSZ, " \"Aä\" ");
-    parse_doc(DEFAULT_MEMSZ, " \"Aäö8ü-\" ");
-    parse_doc(DEFAULT_MEMSZ, "\"Aä\"");
-    parse_doc(DEFAULT_MEMSZ, "\"aa߿aa\"");
-    parse_doc(DEFAULT_MEMSZ, "\"aࠀaa\"");
-    parse_doc(DEFAULT_MEMSZ, "\"aa𐀀aa\"");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"( "Aä" )");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"( "Aäö8ü-" )");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"("Aä")");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"("aa߿aa")");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"("aࠀaa")");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"("aa𐀀aa")");
 }
 
 TEST(JsonstTest, StrEscape) {
-    parse_doc(DEFAULT_MEMSZ, "\"aa \\\\ \\\" \\r \\n aa\"");
-    parse_doc(DEFAULT_MEMSZ, "\" aa \\u1234 aa \"");
-    parse_doc(DEFAULT_MEMSZ, "\" \\u1a3C \\uFFFF \"");
-    parse_doc(DEFAULT_MEMSZ, "\" \\uD834\\uDD1E \"");  // UTF-16 surrogate pair.
+    expect_jsonst_success(DEFAULT_MEMSZ, R"("aa \\ \" \r \n aa")");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"(" aa \u1234 aa ")");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"(" \u1a3C \uFFFF ")");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"(" \uD834\uDD1E ")");  // UTF-16 surrogate pair.
 }
 
 TEST(JsonstTest, ObjKey) {
-    parse_doc(DEFAULT_MEMSZ, "{ \"Aä\" :123 }");
-    parse_doc(DEFAULT_MEMSZ, "{ \"Aäö8ü-\" :123 }");
-    parse_doc(DEFAULT_MEMSZ, "{ \"Aä\" :123 }");
-    parse_doc(DEFAULT_MEMSZ, "{ \"aa߿aa\" :123 }");
-    parse_doc(DEFAULT_MEMSZ, "{ \"aࠀaa\" :123 }");
-    parse_doc(DEFAULT_MEMSZ, "{ \"aa \\\\ \\\" \\r \\n aa\":123 }");
-    parse_doc(DEFAULT_MEMSZ, "{ \" aa \\u1234 aa \":123 }");
-    parse_doc(DEFAULT_MEMSZ, "{ \" \\u1a3C \\uFFFF \":123 }");
-    parse_doc(DEFAULT_MEMSZ, "{ \" \\uD834\\uDD1E \":123 }");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({ "Aä" :123 })");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({ "Aäö8ü-" :123 })");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({ "Aä" :123 })");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({ "aa߿aa" :123 })");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({ "aࠀaa" :123 })");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({ "aa \\ \" \r \n aa":123 })");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({ " aa \u1234 aa ":123 })");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({ " \u1a3C \uFFFF ":123 })");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({ " \uD834\uDD1E ":123 })");
 }
 
 TEST(JsonstTest, ListSimple) {
-    parse_doc(DEFAULT_MEMSZ, "[]");
-    parse_doc(DEFAULT_MEMSZ, "[ ]");
-    parse_doc(DEFAULT_MEMSZ, "[  ]");
-    parse_doc(DEFAULT_MEMSZ, " [  ] ");
-    parse_doc(DEFAULT_MEMSZ, "[true]");
-    parse_doc(DEFAULT_MEMSZ, "[true,false]");
-    parse_doc(DEFAULT_MEMSZ, "[true,false,null]");
-    parse_doc(DEFAULT_MEMSZ, "[true,false,  null ] ");
-    parse_doc(DEFAULT_MEMSZ, " [ true, false , null  ,[]  , 123 ] ");
-    parse_doc(DEFAULT_MEMSZ, " [ true, false , null  ,[]  , 123] ");
-    parse_doc(DEFAULT_MEMSZ, " [ true, false , null  ,[]  , 123, 123,true ] ");
+    expect_jsonst_success(DEFAULT_MEMSZ, "[]");
+    expect_jsonst_success(DEFAULT_MEMSZ, "[ ]");
+    expect_jsonst_success(DEFAULT_MEMSZ, "[  ]");
+    expect_jsonst_success(DEFAULT_MEMSZ, " [  ] ");
+    expect_jsonst_success(DEFAULT_MEMSZ, "[true]");
+    expect_jsonst_success(DEFAULT_MEMSZ, "[true,false]");
+    expect_jsonst_success(DEFAULT_MEMSZ, "[true,false,null]");
+    expect_jsonst_success(DEFAULT_MEMSZ, "[true,false,  null ] ");
+    expect_jsonst_success(DEFAULT_MEMSZ, " [ true, false , null  ,[]  , 123 ] ");
+    expect_jsonst_success(DEFAULT_MEMSZ, " [ true, false , null  ,[]  , 123] ");
+    expect_jsonst_success(DEFAULT_MEMSZ, " [ true, false , null  ,[]  , 123, 123,true ] ");
 }
 
 TEST(JsonstTest, ListNested) {
-    parse_doc(DEFAULT_MEMSZ, "[[[],[[[[]]]], []]]");
-    parse_doc(DEFAULT_MEMSZ, "[[[ ],[[[ [] ],[], [],[[ []]], [] ]], []]]");
+    expect_jsonst_success(DEFAULT_MEMSZ, "[[[],[[[[]]]], []]]");
+    expect_jsonst_success(DEFAULT_MEMSZ, "[[[ ],[[[ [] ],[], [],[[ []]], [] ]], []]]");
 }
 
 TEST(JsonstTest, ObjectSimple) {
-    parse_doc(DEFAULT_MEMSZ, "{}");
-    parse_doc(DEFAULT_MEMSZ, "{ }");
-    parse_doc(DEFAULT_MEMSZ, "{  }");
-    parse_doc(DEFAULT_MEMSZ, " {   } ");
-    parse_doc(DEFAULT_MEMSZ, "{ \"ky\": null}  ");
-    parse_doc(DEFAULT_MEMSZ, "{ \"ky\": 123}  ");
-    parse_doc(DEFAULT_MEMSZ, "{ \"ky\": 123 }  ");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({})");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({ })");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({  })");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"( {   } )");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({ "ky": null}  )");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({ "ky": 123}  )");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({ "ky": 123 }  )");
 }
 
 TEST(JsonstTest, ObjectNested) {
-    parse_doc(DEFAULT_MEMSZ, "{ \"1\":{\"1\":{}, \"2\":{\"1\":{}}}, \"2\":{}, \"3\":{} }");
+    expect_jsonst_success(DEFAULT_MEMSZ, R"({ "1":{"1":{}, "2":{"1":{}}}, "2":{}, "3":{} })");
+}
+
+TEST(JsonstTest, Txt) {
+    EXPECT_EQ(R"(
+$=(jsonst_obj)
+$.k=(jsonst_obj_key)'k'
+$.k=(jsonst_arry)
+$.k[0]=(jsonst_num)123
+$.k[1]=jsonst_true
+$.k[2]=(jsonst_str)'strval'
+$.k=(jsonst_arry_end)
+$=(jsonst_obj_end)
+ret=jsonst_success
+n_chars=26
+)",
+              parse_doc_to_txt(DEFAULT_MEMSZ, R"({"k": [123,true,"strval"]})"));
 }

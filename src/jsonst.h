@@ -64,6 +64,12 @@ typedef void (*jsonst_value_cb)(const jsonst_value* value, const jsonst_path* p)
 // Opaque handle.
 typedef struct _jsonst* jsonst;
 
+// jsonpath on/off, int parsing, max key size, max string size
+
+typedef struct {
+    ptrdiff_t obj_key_max_size;
+} jsonst_config;
+
 // Will take ownership of mem (with size memsz) and use it for processing.
 // Will not allocate any memory by itself.
 // After the parser is done, simply free(mem).
@@ -98,4 +104,11 @@ typedef enum {
 // At the end of your input, you must call this method once with c = JSONST_EOF.
 jsonst_error jsonst_feed(jsonst j, const char c);
 
-jsonst_error jsonst_feed_doc(jsonst j, const char* doc, const ptrdiff_t docsz);
+// Return value of jsonst_feed_doc.
+typedef struct {
+    jsonst_error err;
+    // Number of chars consumed.
+    size_t n_chars;
+} jsonst_feed_doc_ret;
+
+jsonst_feed_doc_ret jsonst_feed_doc(jsonst j, const char* doc, const size_t docsz);

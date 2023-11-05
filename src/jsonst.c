@@ -1,7 +1,6 @@
 #include "jsonst.h"
 
 #include <assert.h>
-#include <stdlib.h>  // strtod()
 
 #include "jsonst_impl.h"
 #include "util.h"
@@ -640,12 +639,15 @@ jsonst_error jsonst_feed(jsonst j, const char c) {
     return ret;
 }
 
-jsonst_error jsonst_feed_doc(jsonst j, const char *doc, const ptrdiff_t docsz) {
-    for (ptrdiff_t i = 0; i < docsz; i++) {
-        const jsonst_error ret = jsonst_feed(j, doc[i]);
-        if (ret != jsonst_success) {
+jsonst_feed_doc_ret jsonst_feed_doc(jsonst j, const char *doc, const size_t docsz) {
+    jsonst_feed_doc_ret ret = {0};
+
+    for (ret.n_chars = 0; ret.n_chars < docsz; ret.n_chars++) {
+        ret.err = jsonst_feed(j, doc[ret.n_chars]);
+        if (ret.err != jsonst_success) {
             return ret;
         }
     }
-    return jsonst_feed(j, JSONST_EOF);
+    ret.err = jsonst_feed(j, JSONST_EOF);
+    return ret;
 }

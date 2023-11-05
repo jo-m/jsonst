@@ -4,6 +4,6 @@ cc_binary(
     srcs = ["main.c"],
     deps = [
         "//src:jsonst",
-        "//src:jsonst_helpers",
+        "//src:jsonst_util",
     ],
 )

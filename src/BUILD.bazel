@@ -7,9 +7,9 @@ cc_library(
 )
 
 cc_library(
-    name = "jsonst_helpers",
-    srcs = ["jsonst_helpers.c"],
-    hdrs = ["jsonst_helpers.h"],
+    name = "jsonst_util",
+    srcs = ["jsonst_util.c"],
+    hdrs = ["jsonst_util.h"],
     deps = [":jsonst"],
     visibility = ["//visibility:public"],
 )
@@ -22,11 +22,18 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+cc_library(
+    name = "jsonst_test_util",
+    srcs = ["jsonst_test_util.cc"],
+    hdrs = ["jsonst_test_util.h"],
+    deps = [":jsonst",":jsonst_util","@com_google_googletest//:gtest"],
+)
+
 cc_test(
   name = "jsonst_test",
   size = "small",
   srcs = ["jsonst_test.cc"],
-  deps = ["@com_google_googletest//:gtest_main", ":jsonst", ":jsonst_helpers"],
+  deps = ["@com_google_googletest//:gtest_main", ":jsonst",":jsonst_test_util"],
 )
 
 cc_test(
