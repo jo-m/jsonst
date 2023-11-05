@@ -45,6 +45,8 @@ const char *jsonst_error_to_str(const jsonst_error type) {
             return "jsonst_err_internal_bug";
         case jsonst_err_end_of_doc:
             return "jsonst_err_end_of_doc";
+        case jsonst_err_invalid_eof:
+            return "jsonst_err_invalid_eof";
         case jsonst_err_expected_new_value:
             return "jsonst_err_expected_new_value";
         case jsonst_err_unexpected_char:

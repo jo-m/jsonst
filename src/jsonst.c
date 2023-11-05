@@ -328,12 +328,17 @@ static char is_quotable(const char c) {
 
 static jsonst_error feed(_jsonst *j, const char c) __attribute((warn_unused_result));
 static jsonst_error feed(_jsonst *j, const char c) {
+    visualize_stack(j->sp);
+    printf("feed(\"%c\" = %d)\n", c, c);
+
     // EOF, with special treatment for numbers (which have no delimiters themselves).
     if (c == JSONST_EOF && j->sp->type != jsonst_num) {
         if (j->sp->type == jsonst_doc) {
             j->sp = NULL;
         }
-        assert(j->sp == NULL);
+        if (j->sp != NULL) {
+            return jsonst_err_invalid_eof;
+        }
         return jsonst_success;
     }
 
