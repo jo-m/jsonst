@@ -90,7 +90,10 @@ parsed_bytes=4
 
 double my_real_strtod(const char *nptr, char **endptr) { return strtod(nptr, endptr); }
 
-double my_strtod(const char __attribute((unused)) * nptr, char __attribute((unused)) * *endptr) {
+double my_strtod(const char *nptr, char **endptr) {
+    if (endptr) {
+        *endptr = (char *)nptr + 4;
+    }
     return 4444;
 }
 
@@ -224,4 +227,17 @@ ret=jsonst_success
 parsed_bytes=26
 )",
               parse_doc_to_txt(DEFAULT_MEMSZ, R"({"k": [123,true,"strval"]})"));
+}
+
+TEST(JsonstTest, Edgecases) {
+    EXPECT_NE(jsonst_success, parse_doc_to_err(DEFAULT_MEMSZ, R"({"id":0,})"));
+    EXPECT_NE(jsonst_success, parse_doc_to_err(DEFAULT_MEMSZ, R"({"id":true,})"));
+
+    EXPECT_NE(jsonst_success, parse_doc_to_err(DEFAULT_MEMSZ, ""));
+
+    EXPECT_NE(jsonst_success, parse_doc_to_err(DEFAULT_MEMSZ, " "));
+
+    EXPECT_NE(jsonst_success, parse_doc_to_err(DEFAULT_MEMSZ, R"({"a": true} "x")"));
+
+    EXPECT_NE(jsonst_success, parse_doc_to_err(DEFAULT_MEMSZ, R"([][])"));
 }

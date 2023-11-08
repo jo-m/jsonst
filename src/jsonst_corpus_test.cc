@@ -52,6 +52,7 @@ class FileParseTest : public testing::TestWithParam<fs::directory_entry> {
 
 TEST_P(FileParseTest, ParamTest) {
     const auto entry = GetParam();
+    std::cout << entry.path().filename().string() << std::endl;
     const jsonst_feed_doc_ret ret = feed_testfile(entry.path());
 
     switch (entry.path().filename().string()[0]) {
@@ -63,8 +64,6 @@ TEST_P(FileParseTest, ParamTest) {
             EXPECT_NE(jsonst_success, ret.err);
             break;
     }
-
-    std::cout << entry.path().filename().string() << ' ' << ret.err << std::endl;
 }
 
 std::vector<fs::directory_entry> list_test_files() {

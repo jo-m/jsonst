@@ -428,8 +428,9 @@ static jsonst_error feed(_jsonst *j, const char c) {
     printf("feed(\"%c\" = %d)\n", c, c);
 
     // EOF, with special treatment for numbers (which have no delimiters themselves).
+    // TODO: Maybe move to switch statement.
     if (c == JSONST_EOF && j->sp->type != jsonst_num) {
-        if (j->sp->type == jsonst_doc) {
+        if (j->sp->type == jsonst_doc && j->sp->len > 0) {
             j->sp = NULL;
         }
         if (j->sp != NULL) {
@@ -450,6 +451,10 @@ static jsonst_error feed(_jsonst *j, const char c) {
             if (is_ws(c)) {
                 return jsonst_success;
             }
+            if (j->sp->len > 0) {
+                return jsonst_err_end_of_doc;
+            }
+            j->sp->len++;
             RET_ON_ERR(expect_start_value(j, c));
             return jsonst_success;
         case jsonst_arry:
@@ -497,6 +502,10 @@ static jsonst_error feed(_jsonst *j, const char c) {
                 return jsonst_success;
             }
             if (c == '}') {
+                if (j->sp->len > 0) {
+                    // We are already after the comma.
+                    return jsonst_success;
+                }
                 RET_ON_ERR(emit(j, jsonst_obj_end));
                 pop(j, jsonst_obj);
                 return jsonst_success;
@@ -509,12 +518,12 @@ static jsonst_error feed(_jsonst *j, const char c) {
             }
             // Expected '\"' or '}'.
             return jsonst_err_unexpected_char;
-        case jsonst_obj_post_name:
+        case jsonst_obj_post_key:
             if (is_ws(c)) {
                 return jsonst_success;
             }
             if (c == ':') {
-                pop(j, (int)jsonst_obj_post_name);
+                pop(j, (int)jsonst_obj_post_key);
                 assert(j->sp->type == jsonst_obj_key);
                 RET_ON_ERR(push(j, (int)jsonst_obj_post_sep));
                 // We now still have the key on the stack one below.
@@ -539,6 +548,7 @@ static jsonst_error feed(_jsonst *j, const char c) {
                 pop(j, (int)jsonst_obj_next);
                 pop(j, jsonst_obj_key);
                 assert(j->sp->type == jsonst_obj);
+                j->sp->len++;  // Count members.
                 return jsonst_success;
             }
             if (c == '}') {
@@ -590,7 +600,7 @@ static jsonst_error feed(_jsonst *j, const char c) {
                 }
                 assert(j->sp->type == jsonst_obj_key);
                 RET_ON_ERR(emit(j, jsonst_obj_key));
-                RET_ON_ERR(push(j, (int)jsonst_obj_post_name));
+                RET_ON_ERR(push(j, (int)jsonst_obj_post_key));
                 // We leave the key on the stack for now.
                 return jsonst_success;
             }

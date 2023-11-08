@@ -14,9 +14,9 @@
 typedef enum {
     jsonst_arry_elm_next = '+',
 
-    jsonst_obj_post_name = ':',
-    jsonst_obj_post_sep = '_',
-    jsonst_obj_next = '-',
+    jsonst_obj_post_key = ':',
+    jsonst_obj_post_sep = '-',
+    jsonst_obj_next = ';',
 
     jsonst_str_utf8 = '8',
     jsonst_str_escp = '\\',
