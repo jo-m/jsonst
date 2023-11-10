@@ -6,3 +6,10 @@ filegroup(
         "test_parsing/*.json",
     ]),
 )
+
+filegroup(
+    name = "test_transform",
+    srcs = glob([
+        "test_transform/*.json",
+    ]),
+)
