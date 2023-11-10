@@ -59,7 +59,7 @@ typedef struct jsonst_path {
 // Callback signature.
 // All arguments and locations they might point to have valid lifetime only until the callback
 // returns.
-typedef void (*jsonst_value_cb)(const jsonst_value* value, const jsonst_path* p);
+typedef void (*jsonst_value_cb)(void* user_data, const jsonst_value* value, const jsonst_path* p);
 
 // Opaque handle.
 typedef struct _jsonst* jsonst;
@@ -89,7 +89,9 @@ typedef struct {
 // Might return NULL on OOM.
 // To reset an instance to parse a new doc after EOF has been reached,
 // simply call new_jsonst() again, with the same mem used previously.
-jsonst new_jsonst(uint8_t* mem, const ptrdiff_t memsz, const jsonst_value_cb cb,
+// Context can be passed to the callback by optionally passing non-NULL cb_user_data here.
+// It will be forwarded to the callback as first argument.
+jsonst new_jsonst(uint8_t* mem, const ptrdiff_t memsz, const jsonst_value_cb cb, void* cb_user_data,
                   const jsonst_config conf);
 
 typedef enum {

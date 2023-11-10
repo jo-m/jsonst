@@ -15,7 +15,7 @@ TEST(JsonstTest, ErrorLivecycle) {
     ASSERT_NE(mem, nullptr);
 
     jsonst_config conf = {0, 0, 0, nullptr};
-    jsonst j = new_jsonst(mem, DEFAULT_MEMSZ, null_cb, conf);
+    jsonst j = new_jsonst(mem, DEFAULT_MEMSZ, null_cb, nullptr, conf);
     EXPECT_EQ(jsonst_success, jsonst_feed(j, '{'));
     EXPECT_EQ(jsonst_success, jsonst_feed(j, '}'));
     EXPECT_EQ(jsonst_success, jsonst_feed(j, JSONST_EOF));
@@ -30,7 +30,7 @@ TEST(JsonstTest, NoCb) {
     EXPECT_NE(mem, nullptr);
 
     jsonst_config conf = {0, 0, 0, nullptr};
-    ASSERT_DEATH(new_jsonst(mem, DEFAULT_MEMSZ, NULL, conf), "cb != NULL");
+    ASSERT_DEATH(new_jsonst(mem, DEFAULT_MEMSZ, nullptr, nullptr, conf), "cb != NULL");
 }
 
 TEST(JsonstTest, ConfigAllocStr) {

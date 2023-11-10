@@ -22,7 +22,7 @@ static frame *new_frame(arena *a, frame *prev,
 }
 
 static _jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_value_cb cb,
-                            const jsonst_config conf) {
+                            void *cb_user_data, const jsonst_config conf) {
     arena a = new_arena(mem, memsz);
     jsonst j = new (&a, _jsonst, 1);
     if (j == NULL) {
@@ -31,6 +31,7 @@ static _jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_va
 
     assert(cb != NULL);
     j->cb = cb;
+    j->cb_user_data = cb_user_data;
 
     j->config = conf;
     if (j->config.str_alloc_bytes == 0) {
@@ -56,9 +57,9 @@ static _jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_va
     return j;
 }
 
-jsonst new_jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_value_cb cb,
+jsonst new_jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_value_cb cb, void *cb_user_data,
                   const jsonst_config conf) {
-    return new__jsonst(mem, memsz, cb, conf);
+    return new__jsonst(mem, memsz, cb, cb_user_data, conf);
 }
 
 static jsonst_error frame_buf_putc(frame *f, const char c) __attribute((warn_unused_result));
@@ -232,7 +233,7 @@ static jsonst_error emit(const _jsonst *j, const jsonst_type /* or jsonst_intern
         }
     }
 
-    j->cb(v, p);
+    j->cb(j->cb_user_data, v, p);
     return jsonst_success;
 }
 

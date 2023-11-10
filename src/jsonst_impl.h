@@ -39,12 +39,13 @@ struct frame {
 typedef struct _jsonst _jsonst;
 typedef struct _jsonst {
     jsonst_value_cb cb;
+    void *cb_user_data;
     jsonst_config config;
     jsonst_error failed;
     frame *sp;
 } _jsonst;
 
-// We do not include <stdlib.h> so strtod remains configurable.
+// We do not include <stdlib.h> so users *could* supply their own implementation.
 double strtod(const char *nptr, char **endptr);
 
 // Helpers for error handling.
