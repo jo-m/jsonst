@@ -1,0 +1,10 @@
+
+cc_binary(
+    name = "gron",
+    srcs = ["gron.c"],
+    deps = [
+        "//src:jsonst",
+        "//src:jsonst_util",
+    ],
+    data = ["example.json"],
+)

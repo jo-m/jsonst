@@ -1,9 +1,0 @@
-
-cc_binary(
-    name = "print-events",
-    srcs = ["main.c"],
-    deps = [
-        "//src:jsonst",
-        "//src:jsonst_util",
-    ],
-)
