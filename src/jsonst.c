@@ -424,9 +424,6 @@ static char is_quotable(const char c) {
 
 static jsonst_error feed(_jsonst *j, const char c) __attribute((warn_unused_result));
 static jsonst_error feed(_jsonst *j, const char c) {
-    visualize_stack(j->sp);
-    printf("feed(\"%c\" = %d)\n", c, c);
-
     // EOF, with special treatment for numbers (which have no delimiters themselves).
     // TODO: Maybe move to switch statement.
     if (c == JSONST_EOF && j->sp->type != jsonst_num) {
