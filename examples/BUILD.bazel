@@ -6,5 +6,15 @@ cc_binary(
         "//src:jsonst",
         "//src:jsonst_util",
     ],
-    data = ["example.json"],
+    data = ["testdata/docker-inspect.json"],
+)
+
+cc_binary(
+    name = "data",
+    srcs = ["data.c"],
+    deps = [
+        "//src:jsonst",
+        "//src:jsonst_cstd",
+    ],
+    data = ["testdata/fluglaerm-iselisberg.json"],
 )

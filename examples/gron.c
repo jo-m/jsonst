@@ -1,6 +1,21 @@
+// This example binary implements a simplified version of gron (https://github.com/tomnomnom/gron).
+// Limitations:
+// - Limited CLI arguments parsing.
+// - Does not escape strings on output.
+// - Can only parse, not write, JSON.
+//
+// To run with the example JSON file:
+//
+//   bazel run //examples:gron examples/testdata/docker-inspect.json
+//
+// or
+//
+//   bazel run //examples:gron -- - < examples/testdata/docker-inspect.json
+
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "src/jsonst.h"
 #include "src/jsonst_util.h"
@@ -21,7 +36,7 @@ static void jsonst_path_print(const jsonst_path *path) {
     }
 }
 
-static void cb(void __attribute((unused)) * cb_user_data, const jsonst_value *value,
+static void cb(__attribute((unused)) void *cb_user_data, const jsonst_value *value,
                const jsonst_path *p) {
     switch (value->type) {
         case jsonst_obj_key:
@@ -71,10 +86,15 @@ int main(const int argc, const char **argv) {
         printf("usage: gron <input>.json\n");
         return EXIT_FAILURE;
     }
-    FILE *inf = fopen(argv[1], "r");
-    if (inf == NULL) {
-        fprintf(stderr, "Unable to open file '%s'!\n", argv[1]);
-        return EXIT_FAILURE;
+    FILE *inf;
+    if (strlen(argv[1]) == 1 && argv[1][0] == '-') {
+        inf = stdin;
+    } else {
+        inf = fopen(argv[1], "r");
+        if (inf == NULL) {
+            fprintf(stderr, "Unable to open file '%s'!\n", argv[1]);
+            return EXIT_FAILURE;
+        }
     }
 
     // Prepare parser.
@@ -82,6 +102,10 @@ int main(const int argc, const char **argv) {
     void *mem = malloc(memsz);
     assert(mem != NULL);
     jsonst_config conf = {0};
+    conf.str_alloc_bytes = 2048;
+    conf.obj_key_alloc_bytes = 16;
+    conf.num_alloc_bytes = 16;
+    conf.strtod = strtod;
     jsonst j = new_jsonst(mem, memsz, cb, NULL, conf);
 
     // Process file.
