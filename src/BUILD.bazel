@@ -23,6 +23,21 @@ cc_library(
 )
 
 cc_library(
+    name = "jsonst_cstd",
+    hdrs = ["jsonst_cstd.h"],
+    deps = [":jsonst"],
+    visibility = ["//visibility:public"],
+)
+
+cc_test(
+  name = "jsonst_cstd_test",
+  size = "small",
+  srcs = ["jsonst_cstd_test.cc"],
+  deps = ["@com_google_googletest//:gtest_main", ":jsonst_cstd"],
+  data = ["testdata/test.json"],
+)
+
+cc_library(
     name = "jsonst_test_util",
     srcs = ["jsonst_test_util.cc"],
     hdrs = ["jsonst_test_util.h"],
