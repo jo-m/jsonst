@@ -16,7 +16,7 @@ cc_library(
 
 cc_library(
     name = "jsonst",
-    srcs = ["jsonst.c","jsonst_impl.h"],
+    srcs = ["jsonst.c", "jsonst_impl.h"],
     hdrs = ["jsonst.h"],
     deps = [":util"],
     visibility = ["//visibility:public"],

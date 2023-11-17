@@ -57,11 +57,11 @@ typedef struct jsonst_path {
 } jsonst_path;
 
 // Callback signature.
-// All arguments and locations they might point to have valid lifetime only until the callback
-// returns.
+// The callback arguments and memory locations they point to have valid lifetime only until the
+// callback returns. Excepted from that is user_data.
 typedef void (*jsonst_value_cb)(void* user_data, const jsonst_value* value, const jsonst_path* p);
 
-// Opaque handle.
+// Opaque handle to an instance.
 typedef struct _jsonst* jsonst;
 
 // Default values for jsonst_config.
@@ -70,7 +70,7 @@ typedef struct _jsonst* jsonst;
 #define JSONST_DEFAULT_NUM_ALLOC_BYTES (ptrdiff_t)128
 
 // Configuration values for jsonst.
-// A zero-initialized struct is valid and will use the defaults.
+// A zero-initialized struct is valid and means to use the defaults.
 typedef struct {
     // Max size in bytes for string values.
     ptrdiff_t str_alloc_bytes;
@@ -79,18 +79,19 @@ typedef struct {
     // Max size in bytes for numbers before parsing.
     ptrdiff_t num_alloc_bytes;
     // A strtod implementation to use.
-    // Must have exactly the same semantics as libc's strtod.
+    // Must have the same semantics as libc's strtod.
     double (*strtod)(const char* nptr, char** endptr);
 } jsonst_config;
 
-// Will take ownership of mem (with size memsz) and use it for processing.
-// Will not allocate any memory by itself.
-// After the parser is done, simply free(mem).
-// Might return NULL on OOM.
+// Create an instance.
+// The instance will take ownership of mem (with size memsz) and use it for processing,
+// but it will not allocate memory by malloc() or other means.
+// When the instance is no longer needed, simply free(mem).
 // To reset an instance to parse a new doc after EOF has been reached,
-// simply call new_jsonst() again, with the same mem used previously.
+// call new_jsonst() again, with the same mem used previously.
 // Context can be passed to the callback by optionally passing non-NULL cb_user_data here.
 // It will be forwarded to the callback as first argument.
+// If the memory region mem passed in here is too small to allocate an instance, NULL is returned.
 jsonst new_jsonst(uint8_t* mem, const ptrdiff_t memsz, const jsonst_value_cb cb, void* cb_user_data,
                   const jsonst_config conf);
 
@@ -118,7 +119,10 @@ typedef enum {
 
 #define JSONST_EOF (-1)
 
+// Feed next byte to the parser. This can cause zero, one or more invocations of the
+// callback function.
 // At the end of your input, you must call this method once with c = JSONST_EOF.
+// Returns jsonst_success or an error code.
 jsonst_error jsonst_feed(jsonst j, const char c);
 
 // Return value of jsonst_feed_doc.
@@ -127,4 +131,8 @@ typedef struct {
     size_t parsed_bytes;
 } jsonst_feed_doc_ret;
 
+// Feed an entire document to the parser.
+// Will process until the document is entirely parsed, or an error is met.
+// Returns jsonst_success or an error code, as well as the number of bytes the
+// parser has read from the doc.
 jsonst_feed_doc_ret jsonst_feed_doc(jsonst j, const char* doc, const size_t docsz);

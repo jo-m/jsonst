@@ -8,8 +8,8 @@ extern "C" {
 #include "jsonst_util.h"
 }
 
-void null_cb(void __attribute((unused)) * user_data, const jsonst_value __attribute((unused)) * v,
-             const jsonst_path __attribute((unused)) * p) {}
+void null_cb(__attribute((unused)) void *user_data, __attribute((unused)) const jsonst_value *v,
+             __attribute((unused)) const jsonst_path *p) {}
 
 jsonst_error parse_doc_to_err(const ptrdiff_t memsz, const std::string doc) {
     uint8_t *mem = new uint8_t[memsz];
