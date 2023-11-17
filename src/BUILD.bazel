@@ -37,9 +37,9 @@ cc_test(
 )
 
 cc_test(
-  name = "jsonst_corpus_test",
+  name = "jsonst_test_corpus",
   size = "small",
-  srcs = ["jsonst_corpus_test.cc"],
+  srcs = ["jsonst_test_corpus.cc"],
   deps = ["@com_google_googletest//:gtest_main", ":jsonst",":jsonst_test_util"],
   data = ["@com_github_nst_json_test_suite//:test_parsing", "@com_github_nst_json_test_suite//:test_transform"],
 )
