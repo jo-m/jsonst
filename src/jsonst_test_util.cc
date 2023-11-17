@@ -15,7 +15,7 @@ jsonst_error parse_doc_to_err(const ptrdiff_t memsz, const std::string doc) {
     uint8_t *mem = new uint8_t[memsz];
     EXPECT_NE(mem, nullptr);
 
-    jsonst_config conf = {0, 0, 0, nullptr};
+    jsonst_config conf = {0, 0, 0};
     jsonst j = new_jsonst(mem, memsz, null_cb, nullptr, conf);
     EXPECT_NE(j, nullptr);
 
@@ -57,7 +57,8 @@ void ost_cb(void *user_data, const jsonst_value *value, const jsonst_path *path)
             *o << jsonst_type_to_str(value->type);
             break;
         case jsonst_num:
-            *o << '(' << jsonst_type_to_str(value->type) << ')' << value->val_num;
+            *o << '(' << jsonst_type_to_str(value->type) << ')'
+               << std::string(value->val_str.str, value->val_str.str_len);
             break;
         case jsonst_str:
         case jsonst_obj_key:

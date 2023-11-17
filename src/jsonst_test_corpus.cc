@@ -23,7 +23,7 @@ class FileTest : public testing::TestWithParam<fs::directory_entry> {
         mem = new uint8_t[memsz];
         EXPECT_NE(mem, nullptr);
 
-        conf = {0, 0, 0, nullptr};
+        conf = {0, 0, 0};
         j = new_jsonst(mem, memsz, null_cb, nullptr, conf);
         EXPECT_NE(j, nullptr);
     }

@@ -24,16 +24,22 @@ typedef enum {
 typedef struct {
     jsonst_type type;
 
-    union {
-        // Set if type == jsonst_num.
-        double val_num;
-
-        // Set if type == jsonst_str.
-        struct {
-            char* str;
-            ptrdiff_t str_len;
-        } val_str;
-    };
+    // Set if type == jsonst_str or type == jsonst_num.
+    //
+    // In case of numbers, it is the  users responsability to parse the number.
+    // However, the number is guaranteed to be a valid number as per JSON spec.
+    // Parsing example:
+    //
+    //   #include <stdlib.h>
+    //   char *endptr;
+    //   doulbe num = j->config.strtod(val->str, &endptr);
+    //   if (endptr != val->str + val->str_len) {
+    //       // Error, strtod() did not parse entire number.
+    //   }
+    struct {
+        char* str;
+        ptrdiff_t str_len;
+    } val_str;
 } jsonst_value;
 
 typedef struct jsonst_path jsonst_path;
@@ -78,9 +84,6 @@ typedef struct {
     ptrdiff_t obj_key_alloc_bytes;
     // Max size in bytes for numbers before parsing.
     ptrdiff_t num_alloc_bytes;
-    // A strtod implementation to use.
-    // Must have the same semantics as libc's strtod.
-    double (*strtod)(const char* nptr, char** endptr);
 } jsonst_config;
 
 // Create an instance.

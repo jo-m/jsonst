@@ -61,7 +61,7 @@ static void cb(__attribute((unused)) void *cb_user_data, const jsonst_value *val
             printf("true");
             break;
         case jsonst_num:
-            printf("%f", value->val_num);
+            printf("%.*s", (int)value->val_str.str_len, value->val_str.str);
             break;
         case jsonst_str:
             printf("\"%.*s\"", (int)value->val_str.str_len, value->val_str.str);
@@ -105,7 +105,6 @@ int main(const int argc, const char **argv) {
     conf.str_alloc_bytes = 2048;
     conf.obj_key_alloc_bytes = 16;
     conf.num_alloc_bytes = 16;
-    conf.strtod = strtod;
     jsonst j = new_jsonst(mem, memsz, cb, NULL, conf);
 
     // Process file.

@@ -19,7 +19,7 @@ TEST(JsonstTest, ParseFstream) {
     uint8_t *mem = new uint8_t[DEFAULT_MEMSZ];
     ASSERT_NE(mem, nullptr);
 
-    jsonst_config conf = {0, 0, 0, nullptr};
+    jsonst_config conf = {0, 0, 0};
     jsonst j = new_jsonst(mem, DEFAULT_MEMSZ, null_cb, nullptr, conf);
     ASSERT_NE(j, nullptr);
 

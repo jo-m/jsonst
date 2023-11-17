@@ -45,9 +45,6 @@ typedef struct _jsonst {
     frame *sp;
 } _jsonst;
 
-// We do not include <stdlib.h> so users *could* supply their own implementation.
-double strtod(const char *nptr, char **endptr);
-
 // Helpers for error handling.
 #define RET_ON_ERR(expr)                 \
     {                                    \

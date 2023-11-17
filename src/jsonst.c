@@ -43,9 +43,6 @@ static _jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_va
     if (j->config.num_alloc_bytes == 0) {
         j->config.num_alloc_bytes = JSONST_DEFAULT_NUM_ALLOC_BYTES;
     }
-    if (j->config.strtod == NULL) {
-        j->config.strtod = strtod;
-    }
 
     j->failed = jsonst_success;
 
@@ -87,7 +84,6 @@ typedef enum {
     num_exp_int,
 } number_state;
 
-// Check for some stuff which strtod accepts which are not valid JSON.
 // By not directly integrating this into the parsing state machine we waste
 // a bit of performance, but it's much easier to read.
 static bool is_valid_json_number(const char *buf, const ptrdiff_t len) {
@@ -180,11 +176,8 @@ static jsonst_error emit(const _jsonst *j, const jsonst_type /* or jsonst_intern
             if (!is_valid_json_number(j->sp->str.buf, j->sp->len)) {
                 return jsonst_err_invalid_number;
             }
-            char *endptr;
-            v->val_num = j->config.strtod(j->sp->str.buf, &endptr);
-            if (endptr != j->sp->str.buf + j->sp->len) {
-                return jsonst_err_invalid_number;
-            }
+            v->val_str.str = j->sp->str.buf;
+            v->val_str.str_len = j->sp->len;
         } break;
         case jsonst_str:
         case jsonst_obj_key:
@@ -743,7 +736,6 @@ static jsonst_error feed(_jsonst *j, const char c) {
 
                 return jsonst_success;
             }
-            // One day, maybe do proper parsing instead of leaving all the work to strtof.
             RET_ON_ERR(frame_buf_putc(j->sp, c));
             return jsonst_success;
         default:

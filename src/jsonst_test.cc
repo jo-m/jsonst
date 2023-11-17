@@ -14,7 +14,7 @@ TEST(JsonstTest, ErrorLivecycle) {
     uint8_t *mem = new uint8_t[DEFAULT_MEMSZ];
     ASSERT_NE(mem, nullptr);
 
-    jsonst_config conf = {0, 0, 0, nullptr};
+    jsonst_config conf = {0, 0, 0};
     jsonst j = new_jsonst(mem, DEFAULT_MEMSZ, null_cb, nullptr, conf);
     EXPECT_EQ(jsonst_success, jsonst_feed(j, '{'));
     EXPECT_EQ(jsonst_success, jsonst_feed(j, '}'));
@@ -29,12 +29,12 @@ TEST(JsonstTest, NoCb) {
     uint8_t *mem = new uint8_t[DEFAULT_MEMSZ];
     EXPECT_NE(mem, nullptr);
 
-    jsonst_config conf = {0, 0, 0, nullptr};
+    jsonst_config conf = {0, 0, 0};
     ASSERT_DEATH(new_jsonst(mem, DEFAULT_MEMSZ, nullptr, nullptr, conf), "cb != NULL");
 }
 
 TEST(JsonstTest, ConfigAllocStr) {
-    jsonst_config conf = {2, 0, 0, nullptr};
+    jsonst_config conf = {2, 0, 0};
 
     EXPECT_EQ(R"(
 $=(jsonst_str)'12'
@@ -51,7 +51,7 @@ parsed_bytes=3
 }
 
 TEST(JsonstTest, ConfigAllocObjKey) {
-    jsonst_config conf = {0, 3, 0, nullptr};
+    jsonst_config conf = {0, 3, 0};
 
     EXPECT_EQ(R"(
 $=(jsonst_obj)
@@ -72,7 +72,7 @@ parsed_bytes=5
 }
 
 TEST(JsonstTest, ConfigAllocNum) {
-    jsonst_config conf = {0, 0, 4, nullptr};
+    jsonst_config conf = {0, 0, 4};
 
     EXPECT_EQ(R"(
 $=(jsonst_num)1234
@@ -86,33 +86,6 @@ ret=jsonst_err_str_buffer_full
 parsed_bytes=4
 )",
               parse_doc_to_txt(DEFAULT_MEMSZ, R"(12345)", conf));
-}
-
-double my_real_strtod(const char *nptr, char **endptr) { return strtod(nptr, endptr); }
-
-double my_strtod(const char *nptr, char **endptr) {
-    if (endptr) {
-        *endptr = (char *)nptr + 4;
-    }
-    return 4444;
-}
-
-TEST(JsonstTest, ConfigStrtod) {
-    jsonst_config conf = {0, 0, 0, my_strtod};
-    EXPECT_EQ(R"(
-$=(jsonst_num)4444
-ret=jsonst_success
-parsed_bytes=4
-)",
-              parse_doc_to_txt(DEFAULT_MEMSZ, R"(1111)", conf));
-
-    conf = {0, 0, 0, strtod};
-    EXPECT_EQ(R"(
-$=(jsonst_num)1111
-ret=jsonst_success
-parsed_bytes=4
-)",
-              parse_doc_to_txt(DEFAULT_MEMSZ, R"(1111)", conf));
 }
 
 TEST(JsonstTest, Null) {
