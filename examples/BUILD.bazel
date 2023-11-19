@@ -1,20 +1,19 @@
-
 cc_binary(
     name = "gron",
     srcs = ["gron.c"],
+    data = ["testdata/docker-inspect.json"],
     deps = [
         "//src:jsonst",
         "//src:jsonst_util",
     ],
-    data = ["testdata/docker-inspect.json"],
 )
 
 cc_binary(
     name = "data",
     srcs = ["data.c"],
+    data = ["testdata/fluglaerm-iselisberg.json"],
     deps = [
         "//src:jsonst",
         "//src:jsonst_cstd",
     ],
-    data = ["testdata/fluglaerm-iselisberg.json"],
 )

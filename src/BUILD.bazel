@@ -10,58 +10,82 @@ cc_library(
     name = "jsonst_util",
     srcs = ["jsonst_util.c"],
     hdrs = ["jsonst_util.h"],
-    deps = [":jsonst"],
     visibility = ["//visibility:public"],
+    deps = [":jsonst"],
 )
 
 cc_library(
     name = "jsonst",
-    srcs = ["jsonst.c", "jsonst_impl.h"],
+    srcs = [
+        "jsonst.c",
+        "jsonst_impl.h",
+    ],
     hdrs = ["jsonst.h"],
-    deps = [":util"],
     visibility = ["//visibility:public"],
+    deps = [":util"],
 )
 
 cc_library(
     name = "jsonst_cstd",
     hdrs = ["jsonst_cstd.h"],
-    deps = [":jsonst"],
     visibility = ["//visibility:public"],
+    deps = [":jsonst"],
 )
 
 cc_test(
-  name = "jsonst_cstd_test",
-  size = "small",
-  srcs = ["jsonst_cstd_test.cc"],
-  deps = ["@com_google_googletest//:gtest_main", ":jsonst_cstd"],
-  data = ["testdata/test.json"],
+    name = "jsonst_cstd_test",
+    size = "small",
+    srcs = ["jsonst_cstd_test.cc"],
+    data = ["testdata/test.json"],
+    deps = [
+        ":jsonst_cstd",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_library(
     name = "jsonst_test_util",
     srcs = ["jsonst_test_util.cc"],
     hdrs = ["jsonst_test_util.h"],
-    deps = [":jsonst",":jsonst_util","@com_google_googletest//:gtest"],
+    deps = [
+        ":jsonst",
+        ":jsonst_util",
+        "@com_google_googletest//:gtest",
+    ],
 )
 
 cc_test(
-  name = "jsonst_test",
-  size = "small",
-  srcs = ["jsonst_test.cc"],
-  deps = ["@com_google_googletest//:gtest_main", ":jsonst",":jsonst_test_util"],
+    name = "jsonst_test",
+    size = "small",
+    srcs = ["jsonst_test.cc"],
+    deps = [
+        ":jsonst",
+        ":jsonst_test_util",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_test(
-  name = "jsonst_test_corpus",
-  size = "small",
-  srcs = ["jsonst_test_corpus.cc"],
-  deps = ["@com_google_googletest//:gtest_main", ":jsonst",":jsonst_test_util"],
-  data = ["@com_github_nst_json_test_suite//:test_parsing", "@com_github_nst_json_test_suite//:test_transform"],
+    name = "jsonst_test_corpus",
+    size = "small",
+    srcs = ["jsonst_test_corpus.cc"],
+    data = [
+        "@com_github_nst_json_test_suite//:test_parsing",
+        "@com_github_nst_json_test_suite//:test_transform",
+    ],
+    deps = [
+        ":jsonst",
+        ":jsonst_test_util",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
 
 cc_test(
-  name = "util_test",
-  size = "small",
-  srcs = ["util_test.cc"],
-  deps = ["@com_google_googletest//:gtest_main", ":util"],
+    name = "util_test",
+    size = "small",
+    srcs = ["util_test.cc"],
+    deps = [
+        ":util",
+        "@com_google_googletest//:gtest_main",
+    ],
 )
