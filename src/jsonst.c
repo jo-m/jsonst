@@ -5,18 +5,17 @@
 #include "jsonst_impl.h"
 #include "util.h"
 
-static frame *new_frame(arena *a, frame *prev,
+static frame *new_frame(arena a, frame *prev,
                         const jsonst_type /* or jsonst_internal_state */ type) {
-    // Allocate the frame itself on the parent arena.
-    frame *f = new (a, frame, 1);
+    // Allocate the frame on its own copy of the arena.
+    frame *f = new (&a, frame, 1);
     if (f == NULL) {
         return NULL;
     }
 
     f->prev = prev;
     f->type = type;
-    // We now make a copy.
-    f->a = *a;
+    f->a = a;
 
     return f;
 }
@@ -46,7 +45,7 @@ static _jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_va
 
     j->failed = jsonst_success;
 
-    j->sp = new_frame(&a, NULL, jsonst_doc);
+    j->sp = new_frame(a, NULL, jsonst_doc);
     if (j->sp == NULL) {
         return NULL;
     }
@@ -335,7 +334,7 @@ static jsonst_error utf8_encode(frame *f, const uint32_t c) {
 static jsonst_error push(_jsonst *j, const jsonst_type /* or jsonst_internal_state */ type)
     __attribute((warn_unused_result));
 static jsonst_error push(_jsonst *j, const jsonst_type /* or jsonst_internal_state */ type) {
-    j->sp = new_frame(&(j->sp->a), j->sp, type);
+    j->sp = new_frame(j->sp->a, j->sp, type);
     if (j->sp == NULL) {
         return jsonst_err_oom;
     }
