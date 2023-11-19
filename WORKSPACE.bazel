@@ -16,3 +16,9 @@ http_archive(
     strip_prefix = "JSONTestSuite-984defc2deaa653cb73cd29f4144a720ec9efe7c",
     urls = ["https://github.com/nst/JSONTestSuite/archive/984defc2deaa653cb73cd29f4144a720ec9efe7c.zip"],
 )
+
+http_archive(
+    name = "hedron_compile_commands",
+    url = "https://github.com/hedronvision/bazel-compile-commands-extractor/archive/eca42c63700fccdc49cf58177e0a96f0f6075a68.tar.gz",
+    strip_prefix = "bazel-compile-commands-extractor-eca42c63700fccdc49cf58177e0a96f0f6075a68",
+)
