@@ -32,10 +32,9 @@ typedef struct {
     //
     //   #include <stdlib.h>
     //   char *endptr;
-    //   doulbe num = j->config.strtod(val->str, &endptr);
-    //   if (endptr != val->str + val->str_len) {
-    //       // Error, strtod() did not parse entire number.
-    //   }
+    //   double num = strtod(value->val_str.str, &endptr);
+    //   // You might want to do real error handling here instead.
+    //   assert(endptr == value->val_str.str + value->val_str.str_len);
     struct {
         char* str;
         ptrdiff_t str_len;
