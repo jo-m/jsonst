@@ -494,7 +494,7 @@ static jsonst_error feed(_jsonst *j, const char c) {
             if (c == '}') {
                 if (j->sp->len > 0) {
                     // We are already after the comma.
-                    return jsonst_success;
+                    return jsonst_err_expected_new_key;
                 }
                 RET_ON_ERR(emit(j, jsonst_obj_end));
                 pop(j, jsonst_obj);

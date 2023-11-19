@@ -109,6 +109,7 @@ typedef enum {
     jsonst_err_invalid_eof,
 
     jsonst_err_expected_new_value,
+    jsonst_err_expected_new_key,
     jsonst_err_unexpected_char,
     jsonst_err_invalid_literal,
     jsonst_err_invalid_control_char,

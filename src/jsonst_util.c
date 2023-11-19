@@ -67,6 +67,9 @@ const char *jsonst_error_to_str(const jsonst_error type) {
             return "jsonst_err_invalid_unicode_codepoint";
         case jsonst_err_invalid_utf16_surrogate:
             return "jsonst_err_invalid_utf16_surrogate";
+        case jsonst_err_expected_new_key:
+            return "jsonst_err_expected_new_key";
+            break;
     }
 
     return "__UNKNOWN__";

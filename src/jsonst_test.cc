@@ -203,6 +203,23 @@ parsed_bytes=26
 }
 
 TEST(JsonstTest, Edgecases) {
+    EXPECT_EQ(R"(
+$=(jsonst_obj)
+$=(jsonst_obj_end)
+ret=jsonst_success
+parsed_bytes=2
+)",
+              parse_doc_to_txt(DEFAULT_MEMSZ, R"({})"));
+
+    EXPECT_EQ(R"(
+$=(jsonst_obj)
+$.id=(jsonst_obj_key)'id'
+$.id=(jsonst_num)0
+ret=jsonst_err_expected_new_key
+parsed_bytes=8
+)",
+              parse_doc_to_txt(DEFAULT_MEMSZ, R"({"id":0,})"));
+
     EXPECT_NE(jsonst_success, parse_doc_to_err(DEFAULT_MEMSZ, R"({"id":0,})"));
     EXPECT_NE(jsonst_success, parse_doc_to_err(DEFAULT_MEMSZ, R"({"id":true,})"));
 
