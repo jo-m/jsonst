@@ -26,7 +26,7 @@ typedef struct {
 
     // Set if type == jsonst_str or type == jsonst_num.
     //
-    // In case of numbers, it is the  users responsability to parse the number.
+    // In case of numbers, it is the  users responsibility to parse the number.
     // However, the number is guaranteed to be a valid number as per JSON spec.
     // Parsing example:
     //
