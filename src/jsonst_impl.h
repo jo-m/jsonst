@@ -1,5 +1,6 @@
 #pragma once
 
+#include "jsonst.h"
 #include "util.h"
 
 #define STR_NULL "null"
