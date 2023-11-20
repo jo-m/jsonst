@@ -11,3 +11,10 @@ build --copt='-Wshadow'
 build --copt='-Wsign-compare'
 build --copt='-Wunreachable-code'
 build --copt='-iquotesrc/'
+
+# Required for erenon_bazel_clang_tidy to operate as expected
+build:clang-tidy --aspects @erenon_bazel_clang_tidy//clang_tidy:clang_tidy.bzl%clang_tidy_aspect
+build:clang-tidy --output_groups=report
+
+# Optionally override the .clang-tidy config file target
+build:clang-tidy --@erenon_bazel_clang_tidy//:clang_tidy_config=//:clang_tidy_config
