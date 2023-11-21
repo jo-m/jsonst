@@ -45,6 +45,7 @@ cc_test(
 
 cc_library(
     name = "jsonst_test_util",
+    testonly = True,
     srcs = ["jsonst_test_util.cc"],
     hdrs = ["jsonst_test_util.h"],
     deps = [
