@@ -1,3 +1,7 @@
+"""
+Copied and modified from https://github.com/erenon/bazel_clang_tidy/
+"""
+
 load("@bazel_tools//tools/build_defs/cc:action_names.bzl", "ACTION_NAMES")
 load("@bazel_tools//tools/cpp:toolchain_utils.bzl", "find_cpp_toolchain")
 
@@ -83,7 +87,19 @@ def _rule_sources(ctx):
         Returns True if the file type matches one of the permitted srcs file types for C and C++ header/source files.
         """
         permitted_file_types = [
-            ".c", ".cc", ".cpp", ".cxx", ".c++", ".C", ".h", ".hh", ".hpp", ".hxx", ".inc", ".inl", ".H",
+            ".c",
+            ".cc",
+            ".cpp",
+            ".cxx",
+            ".c++",
+            ".C",
+            ".h",
+            ".hh",
+            ".hpp",
+            ".hxx",
+            ".inc",
+            ".inl",
+            ".H",
         ]
         for file_type in permitted_file_types:
             if src.basename.endswith(file_type):
@@ -92,7 +108,7 @@ def _rule_sources(ctx):
 
     srcs = []
     if hasattr(ctx.rule.attr, "srcs"):
-        for src in ctx.rule.attr.srcs:
+        for _ in ctx.rule.attr.srcs:
             srcs += [src for src in src.files.to_list() if src.is_source and check_valid_file_type(src)]
     return srcs
 
