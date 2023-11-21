@@ -8,7 +8,7 @@
 static frame *new_frame(arena a, frame *prev,
                         const jsonst_type /* or jsonst_internal_state */ type) {
     // Allocate the frame on its own copy of the arena.
-    frame *f = new (&a, frame, 1);
+    frame *f = New (&a, frame, 1);
     if (f == NULL) {
         return NULL;
     }
@@ -23,7 +23,7 @@ static frame *new_frame(arena a, frame *prev,
 static _jsonst *new__jsonst(uint8_t *mem, const ptrdiff_t memsz, const jsonst_value_cb cb,
                             void *cb_user_data, const jsonst_config conf) {
     arena a = new_arena(mem, memsz);
-    jsonst j = new (&a, _jsonst, 1);
+    jsonst j = New (&a, _jsonst, 1);
     if (j == NULL) {
         return NULL;
     }
@@ -166,7 +166,7 @@ static jsonst_error emit(const _jsonst *j, const jsonst_type /* or jsonst_intern
 static jsonst_error emit(const _jsonst *j, const jsonst_type /* or jsonst_internal_state */ type) {
     arena scratch = j->sp->a;
 
-    jsonst_value *v = new (&scratch, jsonst_value, 1);
+    jsonst_value *v = New (&scratch, jsonst_value, 1);
     RET_OOM_IFNULL(v);
     v->type = type;
     switch (type) {
@@ -200,7 +200,7 @@ static jsonst_error emit(const _jsonst *j, const jsonst_type /* or jsonst_intern
                 continue;
         }
 
-        jsonst_path *p_new = new (&scratch, jsonst_path, 1);
+        jsonst_path *p_new = New (&scratch, jsonst_path, 1);
         if (p_new == NULL) {
             return jsonst_err_oom;
         }

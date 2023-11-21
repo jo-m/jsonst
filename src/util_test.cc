@@ -20,12 +20,12 @@ TEST(UtilTest, NullTerm) {
 
     char hello[] = "hello";
     EXPECT_EQ(strlen(hello), 5);
-    EXPECT_EQ(sizeof(hello), 6);
+    EXPECT_EQ(Sizeof(hello), 6);
 
-    EXPECT_EQ(lengthof(hello), 5);
-    EXPECT_EQ(countof(hello), 6);
+    EXPECT_EQ(Lengthof(hello), 5);
+    EXPECT_EQ(Countof(hello), 6);
 
-    s8 s8hello = {hello, lengthof(hello)};
+    s8 s8hello = {hello, Lengthof(hello)};
     EXPECT_EQ(s8hello.len, 5);
     EXPECT_EQ(s8hello.buf[s8hello.len], '\0');
 

@@ -75,7 +75,6 @@ static void cb(__attribute((unused)) void *cb_user_data, const jsonst_value *val
         default:
             fprintf(stderr, "Unhandled type [%d], this is a bug!\n", (int)value->type);
             exit(1);
-            abort();
     }
     printf(";\n");
 }

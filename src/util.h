@@ -4,10 +4,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define sizeof(x) (ptrdiff_t)sizeof(x)
-#define alignof(x) (ptrdiff_t) _Alignof(x)
-#define countof(a) (sizeof(a) / sizeof(*(a)))
-#define lengthof(s) (countof(s) - 1)
+#define Sizeof(x) (ptrdiff_t)sizeof(x)
+#define Alignof(x) (ptrdiff_t) _Alignof(x)
+#define Countof(a) (Sizeof(a) / Sizeof(*(a)))
+#define Lengthof(s) (Countof(s) - 1)
 
 // Inspired by https://nullprogram.com/blog/2023/09/27/.
 typedef struct {
@@ -23,7 +23,7 @@ __attribute((malloc, alloc_size(2), alloc_align(3))) void *alloc(arena *a, ptrdi
     __attribute((warn_unused_result));
 
 // clang-format off
-#define new(a, t, n)(t *) alloc(a, sizeof(t), _Alignof(t), n)
+#define New(a, t, n)(t *) alloc(a, Sizeof(t), _Alignof(t), n)
 // clang-format on
 
 #define s8(s) \

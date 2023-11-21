@@ -42,7 +42,7 @@ void copy(char *restrict dst, char *restrict src, ptrdiff_t len) {
 s8 new_s8(arena *a, const ptrdiff_t len) {
     s8 s = {0};
     // +1 is for C 0 byte interop.
-    s.buf = new (a, char, len + 1);
+    s.buf = New (a, char, len + 1);
     if (s.buf != NULL) {
         s.len = len;
     }

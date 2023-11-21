@@ -4,11 +4,11 @@
 #include "util.h"
 
 #define STR_NULL "null"
-#define STR_NULL_LEN (sizeof(STR_NULL) - 1)
+#define STR_NULL_LEN (Sizeof(STR_NULL) - 1)
 #define STR_TRUE "true"
-#define STR_TRUE_LEN (sizeof(STR_TRUE) - 1)
+#define STR_TRUE_LEN (Sizeof(STR_TRUE) - 1)
 #define STR_FALSE "false"
-#define STR_FALSE_LEN (sizeof(STR_FALSE) - 1)
+#define STR_FALSE_LEN (Sizeof(STR_FALSE) - 1)
 
 // In most places where jsonst_type is used, jsonst_internal_state may also be used.
 // Thus, we need to be careful to no accidentally introduce overlaps.
