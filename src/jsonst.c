@@ -1,8 +1,80 @@
 #include "jsonst.h"
 
 #include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
 
-#include "util.h"
+#define Sizeof(x) (ptrdiff_t)sizeof(x)
+#define Alignof(x) (ptrdiff_t) _Alignof(x)
+#define Countof(a) (Sizeof(a) / Sizeof(*(a)))
+#define Lengthof(s) (Countof(s) - 1)
+
+// Utils - arena alloc, strings.
+
+// Inspired by https://nullprogram.com/blog/2023/09/27/.
+typedef struct {
+    uint8_t *beg;
+    uint8_t *end;
+} arena;
+
+// Inspired by https://nullprogram.com/blog/2023/10/08/, modified to always be null byte terminated.
+// The length field is excluding the 0 byte.
+typedef struct {
+    char *buf;
+    ptrdiff_t len;
+} s8;
+
+#define s8(s) \
+    (s8) { (char *)s, lengthof(s) }
+
+static arena new_arena(uint8_t *mem, const ptrdiff_t memsz) {
+    arena a = {0};
+    a.beg = mem;
+    a.end = a.beg ? a.beg + memsz : 0;
+    return a;
+}
+
+// Returns NULL on OOM.
+static __attribute((malloc, alloc_size(2, 4), alloc_align(3))) void *alloc(arena *a, ptrdiff_t size,
+                                                                           ptrdiff_t align,
+                                                                           ptrdiff_t count) {
+    ptrdiff_t avail = a->end - a->beg;
+    ptrdiff_t padding = -(uintptr_t)a->beg & (align - 1);
+    if (count > (avail - padding) / size) {
+        return NULL;
+    }
+    ptrdiff_t total = size * count;
+    uint8_t *p = a->beg + padding;
+    a->beg += padding + total;
+
+    // memset(p, 0, total)
+    for (ptrdiff_t i = 0; i < total; i++) {
+        p[i] = 0;
+    }
+
+#ifndef NDEBUG
+    for (uint8_t *m = a->beg; m <= a->end; m++) {
+        *m = '~';
+    }
+#endif
+
+    return p;
+}
+
+#define New(a, t, n) (t *)alloc(a, Sizeof(t), _Alignof(t), n)
+
+// May return s8.buf = NULL on OOM.
+static s8 new_s8(arena *a, const ptrdiff_t len) {
+    s8 s = {0};
+    // +1 is for C 0 byte interop.
+    s.buf = New(a, char, len + 1);
+    if (s.buf != NULL) {
+        s.len = len;
+    }
+    return s;
+}
+
+// Implementation structs.
 
 // In most places where jsonst_type is used, jsonst_internal_state may also be used.
 // Thus, we need to be careful to no accidentally introduce overlaps.
@@ -53,6 +125,8 @@ typedef struct _jsonst {
     if ((expr) == NULL) {      \
         return jsonst_err_oom; \
     }
+
+// Implementation.
 
 static frame *new_frame(arena a, frame *prev,
                         const jsonst_type /* or jsonst_internal_state */ type) {

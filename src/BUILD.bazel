@@ -1,12 +1,6 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
-    name = "util",
-    srcs = ["util.c"],
-    hdrs = ["util.h"],
-)
-
-cc_library(
     name = "jsonst_util",
     srcs = ["jsonst_util.c"],
     hdrs = ["jsonst_util.h"],
@@ -21,7 +15,6 @@ cc_library(
     ],
     hdrs = ["jsonst.h"],
     visibility = ["//visibility:public"],
-    deps = [":util"],
 )
 
 cc_library(
@@ -76,16 +69,6 @@ cc_test(
     deps = [
         ":jsonst",
         ":jsonst_test_util",
-        "@com_google_googletest//:gtest_main",
-    ],
-)
-
-cc_test(
-    name = "util_test",
-    size = "small",
-    srcs = ["util_test.cc"],
-    deps = [
-        ":util",
         "@com_google_googletest//:gtest_main",
     ],
 )
