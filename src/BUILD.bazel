@@ -1,38 +1,12 @@
 load("@rules_cc//cc:defs.bzl", "cc_library")
 
 cc_library(
-    name = "jsonst_util",
-    srcs = ["jsonst_util.c"],
-    hdrs = ["jsonst_util.h"],
-    visibility = ["//visibility:public"],
-    deps = [":jsonst"],
-)
-
-cc_library(
     name = "jsonst",
     srcs = [
         "jsonst.c",
     ],
     hdrs = ["jsonst.h"],
     visibility = ["//visibility:public"],
-)
-
-cc_library(
-    name = "jsonst_cstd",
-    hdrs = ["jsonst_cstd.h"],
-    visibility = ["//visibility:public"],
-    deps = [":jsonst"],
-)
-
-cc_test(
-    name = "jsonst_cstd_test",
-    size = "small",
-    srcs = ["jsonst_cstd_test.cc"],
-    data = ["testdata/test.json"],
-    deps = [
-        ":jsonst_cstd",
-        "@com_google_googletest//:gtest_main",
-    ],
 )
 
 cc_library(
@@ -69,6 +43,32 @@ cc_test(
     deps = [
         ":jsonst",
         ":jsonst_test_util",
+        "@com_google_googletest//:gtest_main",
+    ],
+)
+
+cc_library(
+    name = "jsonst_util",
+    srcs = ["jsonst_util.c"],
+    hdrs = ["jsonst_util.h"],
+    visibility = ["//visibility:public"],
+    deps = [":jsonst"],
+)
+
+cc_library(
+    name = "jsonst_cstd",
+    hdrs = ["jsonst_cstd.h"],
+    visibility = ["//visibility:public"],
+    deps = [":jsonst"],
+)
+
+cc_test(
+    name = "jsonst_cstd_test",
+    size = "small",
+    srcs = ["jsonst_cstd_test.cc"],
+    data = ["testdata/test.json"],
+    deps = [
+        ":jsonst_cstd",
         "@com_google_googletest//:gtest_main",
     ],
 )
