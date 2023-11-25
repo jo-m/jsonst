@@ -2,7 +2,7 @@
 
 A minimal JSON streaming parsing library with the following features and design goals:
 
-- Fully JSON compliant (whatever that means)
+- Fully JSON compliant (whatever that means, see [#standards-compliance](#standards-compliance))
 - Suited for embedded usage
 - C11, easy to use from C++
 - Low memory usage
@@ -26,7 +26,7 @@ To include the library in your project, simply copy the relevant files from `src
 - `jsonst_cstd.h`: Thin wrapper to allow usage of C `FILE *` streams
 - `jsonst_util.h`, `jsonst_util.c`: Helpers to convert library ENUMs to strings
 
-# Standards compliance
+## Standards compliance
 
 To the best of my knowledge, this library conforms to the following specifications:
 
