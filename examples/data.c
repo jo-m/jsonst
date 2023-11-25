@@ -1,4 +1,5 @@
 // Sample code showing how to parse and process data.
+// Features the usage of jsonst_cstd.h.
 // To run:
 //
 //   bazel run //examples:data examples/testdata/fluglaerm-iselisberg.json

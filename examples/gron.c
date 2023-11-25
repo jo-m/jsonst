@@ -1,6 +1,6 @@
 // This example binary implements a simplified version of gron (https://github.com/tomnomnom/gron).
-// Limitations:
-// - Limited CLI arguments parsing.
+// Limitations compared to the original:
+// - Very limited CLI arguments parsing.
 // - Does not escape strings on output.
 // - Can only parse, not write, JSON.
 //

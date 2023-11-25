@@ -36,7 +36,9 @@ typedef struct {
     //   // You might want to do real error handling here instead.
     //   assert(endptr == value->val_str.str + value->val_str.str_len);
     struct {
+        // This is null byte terminated for compatibility with the C stdlib.
         char* str;
+        // Length of str without null byte.
         ptrdiff_t str_len;
     } val_str;
 } jsonst_value;
@@ -55,7 +57,9 @@ typedef struct jsonst_path {
 
         // Set if type == jsonst_obj_key.
         struct {
+            // This is null byte terminated for compatibility with the C stdlib.
             char* str;
+            // Length of str without null byte.
             ptrdiff_t str_len;
         } obj_key;
     } props;
@@ -67,6 +71,7 @@ typedef struct jsonst_path {
 typedef void (*jsonst_value_cb)(void* user_data, const jsonst_value* value, const jsonst_path* p);
 
 // Opaque handle to an instance.
+// Use new_jsonst() to allocate one.
 typedef struct _jsonst* jsonst;
 
 // Default values for jsonst_config.
