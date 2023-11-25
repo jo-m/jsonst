@@ -90,8 +90,8 @@ TEST_P(FileTest, ParseFile) {
     // For the rest, we are happy enough if we don't crash.
 }
 
-INSTANTIATE_TEST_CASE_P(ParseFile_parsing_files, FileTest,
-                        ::testing::ValuesIn(list_test_files(test_parsing_files)), get_test_name);
+INSTANTIATE_TEST_SUITE_P(ParseFile_parsing_files, FileTest,
+                         ::testing::ValuesIn(list_test_files(test_parsing_files)), get_test_name);
 
-INSTANTIATE_TEST_CASE_P(ParseFile_transform_files, FileTest,
-                        ::testing::ValuesIn(list_test_files(test_transform_files)), get_test_name);
+INSTANTIATE_TEST_SUITE_P(ParseFile_transform_files, FileTest,
+                         ::testing::ValuesIn(list_test_files(test_transform_files)), get_test_name);
