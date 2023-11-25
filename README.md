@@ -1,6 +1,6 @@
 # JSONST - A streaming JSON library
 
-A minimal JSON parsing library with the following features and design goals:
+A minimal JSON streaming parsing library with the following features and design goals:
 
 - Fully JSON compliant (whatever that means)
 - Suited for embedded usage
