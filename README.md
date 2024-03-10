@@ -14,9 +14,9 @@ Fully tested (GTest, C++17), passes https://github.com/nst/JSONTestSuite.
 The real reason I wrote this was that I read https://nullprogram.com/blog/2023/09/27/
 and wanted to play around with arena allocation in C.
 
-## Usage
+## Documentation & Usage
 
-- Documentation: [src/jsonst.h](src/jsonst.h)
+- Documentation: [src/jsonst.h](src/jsonst.h) (and other header files)
 - Examples: [examples](examples)
 
 No binaries are provided.

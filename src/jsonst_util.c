@@ -28,7 +28,7 @@ const char *jsonst_type_to_str(jsonst_type type) {
             return "jsonst_obj_end";
     }
 
-    return "__UNKNOWN__";
+    return JSONST_UNKNOWN;
 }
 
 const char *jsonst_error_to_str(const jsonst_error type) {
@@ -72,5 +72,5 @@ const char *jsonst_error_to_str(const jsonst_error type) {
             break;
     }
 
-    return "__UNKNOWN__";
+    return JSONST_UNKNOWN;
 }

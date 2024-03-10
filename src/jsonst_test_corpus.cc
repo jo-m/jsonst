@@ -1,3 +1,6 @@
+// Test jsonst against the JSON Test Suite
+// (https://github.com/nst/JSONTestSuite).
+
 #include <gtest/gtest-spi.h>
 #include <gtest/gtest.h>
 

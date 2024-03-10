@@ -1,5 +1,7 @@
 #pragma once
 
+// jsonst_test_util.{h,cc}: Internal utilities for tests.
+
 #include <string>
 
 extern "C" {

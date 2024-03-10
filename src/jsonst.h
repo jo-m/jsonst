@@ -1,9 +1,12 @@
 #pragma once
 
+// jsonst.{h,cc}: The main implementation.
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
+// Object types.
 typedef enum {
     jsonst_doc = 'd',
     jsonst_null = 'n',
@@ -21,14 +24,15 @@ typedef enum {
     jsonst_obj_end = '}',
 } jsonst_type;
 
+// A JSON value.
 typedef struct {
     jsonst_type type;
 
     // Set if type == jsonst_str or type == jsonst_num.
     //
-    // In case of numbers, it is the  users responsibility to parse the number.
-    // However, the number is guaranteed to be a valid number as per JSON spec.
-    // Parsing example:
+    // In case of jsonst_num, you have to parse the number yourself - it is provided here exactly as
+    // it is in the document. It is guaranteed to be a valid number as per JSON spec and strtod()
+    // should always work on it. Parsing example:
     //
     //   #include <stdlib.h>
     //   char *endptr;
@@ -36,19 +40,20 @@ typedef struct {
     //   // You might want to do real error handling here instead.
     //   assert(endptr == value->val_str.str + value->val_str.str_len);
     struct {
-        // This is null byte terminated for compatibility with the C stdlib.
+        // This is null byte terminated for compatibility with C strings.
         char* str;
-        // Length of str without null byte.
+        // Length of str _without_ the null byte.
         ptrdiff_t str_len;
     } val_str;
 } jsonst_value;
 
+// A JSON path describing the location of a value in a document.
 typedef struct jsonst_path jsonst_path;
 typedef struct jsonst_path {
-    // Valid options are only jsonst_arry_elm, jsonst_obj_key.
+    // Valid options are only jsonst_arry_elm and jsonst_obj_key.
     jsonst_type type;
 
-    // Will be NULL for last path segment.
+    // Will be NULL for the last path segment.
     jsonst_path* next;
 
     union {
@@ -80,7 +85,7 @@ typedef struct _jsonst* jsonst;
 #define JSONST_DEFAULT_NUM_ALLOC_BYTES (ptrdiff_t)128
 
 // Configuration values for jsonst.
-// A zero-initialized struct is valid and means to use the defaults.
+// A zero-initialized struct is valid and means using the defaults.
 typedef struct {
     // Max size in bytes for string values.
     ptrdiff_t str_alloc_bytes;
@@ -91,17 +96,23 @@ typedef struct {
 } jsonst_config;
 
 // Create an instance.
-// The instance will take ownership of mem (with size memsz) and use it for processing,
-// but it will not allocate memory by malloc() or other means.
-// When the instance is no longer needed, simply free(mem).
-// To reset an instance to parse a new doc after EOF has been reached,
-// call new_jsonst() again, with the same mem used previously.
-// Context can be passed to the callback by optionally passing non-NULL cb_user_data here.
-// It will be forwarded to the callback as first argument.
-// If the memory region mem passed in here is too small to allocate an instance, NULL is returned.
+//
+// - The instance will take ownership of the memory buffer mem (with size memsz) and use it as
+// allocation arena.
+// - It will not allocate memory by any other means (e.g. malloc).
+// - To destroy the instance, simply free(mem).
+// - An instance is good to parse one single JSON document.
+// - To parse a new one, it needs to be reset. To do that, simply call new_jsonst() again with the
+//   same mem argument.
+//   Calling new_jsonst() with the same mem argument will always return the same value, so you you
+//   can ignore it if all you want is to reset the instance.
+// - Context can be passed to the callback by optionally passing non-NULL cb_user_data here.
+//   It will be forwarded to the callback as first argument.
+// - If the memory region mem passed in here is too small to allocate an instance, NULL is returned.
 jsonst new_jsonst(uint8_t* mem, const ptrdiff_t memsz, const jsonst_value_cb cb, void* cb_user_data,
                   const jsonst_config conf);
 
+// Error codes.
 typedef enum {
     jsonst_success = 0,
 
@@ -127,8 +138,8 @@ typedef enum {
 
 #define JSONST_EOF (-1)
 
-// Feed next byte to the parser. This can cause zero, one or more invocations of the
-// callback function.
+// Feed the next byte to the parser.
+// This can cause zero, one or multiple invocations of the callback function.
 // At the end of your input, you must call this method once with c = JSONST_EOF.
 // Returns jsonst_success or an error code.
 jsonst_error jsonst_feed(jsonst j, const char c);

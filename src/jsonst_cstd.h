@@ -1,10 +1,13 @@
 #pragma once
 
+// jsonst_cstd.h: Helper functions for jsonst which depend on the C standard library.
+
 #include <stdio.h>
 
 #include "jsonst.h"
 
-// Like jsonst_feed_doc(), but works with a stdio FILE stream.
+// jsonst_feed_fstream() is like jsonst_feed_doc(),
+// but reads from a stdio FILE stream.
 static inline jsonst_feed_doc_ret jsonst_feed_fstream(jsonst j, FILE *f) {
     jsonst_feed_doc_ret ret;
     ret.err = jsonst_success;
