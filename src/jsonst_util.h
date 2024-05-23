@@ -1,4 +1,5 @@
-#pragma once
+#ifndef JSONST_UTIL_H
+#define JSONST_UTIL_H
 
 // jsonst_util.{h,cc}: Optional utilities for jsonst.
 
@@ -13,3 +14,5 @@ const char *jsonst_type_to_str(const jsonst_type type);
 // jsonst_error_to_str() returns a string representation of the given jsonst_error.
 // Returns JSONST_UNKNOWN if the error is not known.
 const char *jsonst_error_to_str(const jsonst_error type);
+
+#endif

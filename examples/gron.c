@@ -104,7 +104,7 @@ int main(const int argc, const char **argv) {
     conf.str_alloc_bytes = 2048;
     conf.obj_key_alloc_bytes = 16;
     conf.num_alloc_bytes = 16;
-    jsonst j = new_jsonst(mem, memsz, cb, NULL, conf);
+    jsonst j = new_jsonst((uint8_t *)mem, memsz, cb, NULL, conf);
 
     // Process file.
     while (1) {

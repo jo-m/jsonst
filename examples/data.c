@@ -20,7 +20,7 @@ typedef struct {
 
 static dvec new_dvec(const size_t cap) {
     dvec ret = {0};
-    ret.val = calloc(cap, sizeof(double));
+    ret.val = (double *)calloc(cap, sizeof(double));
     assert(ret.val != NULL);
     ret.len = 0;
     ret.cap = cap;
@@ -81,7 +81,7 @@ int main(const int argc, const char **argv) {
     void *mem = malloc(memsz);
     assert(mem != NULL);
     jsonst_config conf = {0};
-    jsonst j = new_jsonst(mem, memsz, cb, &vec, conf);
+    jsonst j = new_jsonst((uint8_t *)mem, memsz, cb, &vec, conf);
 
     const jsonst_feed_doc_ret ret = jsonst_feed_fstream(j, inf);
     if (ret.err != jsonst_success) {

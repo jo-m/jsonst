@@ -1,4 +1,5 @@
-#pragma once
+#ifndef JSONST_H
+#define JSONST_H
 
 // jsonst.{h,cc}: The main implementation.
 
@@ -155,3 +156,5 @@ typedef struct {
 // Returns jsonst_success or an error code, as well as the number of bytes the
 // parser has read from the doc.
 jsonst_feed_doc_ret jsonst_feed_doc(jsonst j, const char* doc, const size_t docsz);
+
+#endif
