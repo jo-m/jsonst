@@ -7,7 +7,7 @@ A minimal JSON streaming parsing library with the following features and design 
 - C11, easy to use from C++
 - Low memory usage
 - No dynamic allocation (malloc)
-- No dependencies, not even stdlib, but users have to do their own number parsing (e.g. `strtod()` from `<stdlib.h>`)
+- No dependencies, not even stdlib (users have to do their own number parsing though, e.g. `strtod()` from `<stdlib.h>`)
 
 Fully tested (GTest, C++17), passes https://github.com/nst/JSONTestSuite.
 
@@ -34,7 +34,7 @@ To the best of my knowledge, this library conforms to the following specificatio
 - https://datatracker.ietf.org/doc/html/rfc8259
   - Only UTF-8 is supported
   - No support for BOM
-  - Max length of keys and strings is fixed (runtime configurable)
+  - Max length of strings incl. object keys is fixed but runtime configurable
 
 ## Development
 
