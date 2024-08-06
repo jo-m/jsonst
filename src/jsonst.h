@@ -1,13 +1,13 @@
 #ifndef JSONST_H
 #define JSONST_H
 
-// jsonst.{h,cc}: The main implementation.
+// jsonst.{h,c}: The main implementation.
 
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
-// Object types.
+// Possible types of objects in a JSON document.
 typedef enum {
     jsonst_doc = 'd',
     jsonst_null = 'n',
@@ -29,7 +29,7 @@ typedef enum {
 typedef struct {
     jsonst_type type;
 
-    // Set if type == jsonst_str or type == jsonst_num.
+    // Set only if type == jsonst_str or type == jsonst_num.
     //
     // In case of jsonst_num, you have to parse the number yourself - it is provided here exactly as
     // it is in the document. It is guaranteed to be a valid number as per JSON spec and strtod()
@@ -41,9 +41,9 @@ typedef struct {
     //   // You might want to do real error handling here instead.
     //   assert(endptr == value->val_str.str + value->val_str.str_len);
     struct {
-        // This is null byte terminated for compatibility with C strings.
+        // This is NULL byte terminated for compatibility with C strings.
         char* str;
-        // Length of str _without_ the null byte.
+        // Length of str _without_ the NULL byte.
         ptrdiff_t str_len;
     } val_str;
 } jsonst_value;
@@ -54,7 +54,7 @@ typedef struct jsonst_path {
     // Valid options are only jsonst_arry_elm and jsonst_obj_key.
     jsonst_type type;
 
-    // Will be NULL for the last path segment.
+    // Is NULL for the last path segment.
     jsonst_path* next;
 
     union {
@@ -63,9 +63,9 @@ typedef struct jsonst_path {
 
         // Set if type == jsonst_obj_key.
         struct {
-            // This is null byte terminated for compatibility with the C stdlib.
+            // This is NULL byte terminated for compatibility with the C stdlib.
             char* str;
-            // Length of str without null byte.
+            // Length of str without NULL byte.
             ptrdiff_t str_len;
         } obj_key;
     } props;
@@ -105,7 +105,7 @@ typedef struct {
 // - An instance is good to parse one single JSON document.
 // - To parse a new one, it needs to be reset. To do that, simply call new_jsonst() again with the
 //   same mem argument.
-//   Calling new_jsonst() with the same mem argument will always return the same value, so you you
+//   Calling new_jsonst() with the same mem argument will always return the same instance struct value, so you you
 //   can ignore it if all you want is to reset the instance.
 // - Context can be passed to the callback by optionally passing non-NULL cb_user_data here.
 //   It will be forwarded to the callback as first argument.
