@@ -27,6 +27,17 @@ To include the library in your project, simply copy the relevant files from `src
 - `jsonst_cstd.h`: Thin wrapper to allow usage of C `FILE *` streams
 - `jsonst_util.h`, `jsonst_util.c`: Helpers to convert library ENUMs to strings
 
+### ESP-IDF component
+
+To use this library in your ESP-IDF project, simply add it as your `idf_component.yml` file:
+
+```yml
+dependencies:
+  jsonst:
+    version: "*"
+    git: https://github.com/jo-m/jsonst
+```
+
 ## Standards compliance
 
 To the best of my knowledge, this library conforms to the following specifications:
