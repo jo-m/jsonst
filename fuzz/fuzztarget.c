@@ -79,5 +79,5 @@ int main(int argc, char **argv) {
     }
 
     const jsonst_feed_doc_ret ret = jsonst_feed_fstream(j, f);
-    printf("Result: %s", jsonst_error_to_str(ret.err));
+    printf("Result: %s\n", jsonst_error_to_str(ret.err));
 }
