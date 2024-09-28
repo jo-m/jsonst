@@ -18,6 +18,7 @@ namespace fs = std::filesystem;
 
 const std::string test_parsing_files = "external/com_github_nst_json_test_suite/test_parsing";
 const std::string test_transform_files = "external/com_github_nst_json_test_suite/test_transform";
+const std::string test_fuzz_crashes_files = "src/testdata/crashes";
 const size_t memsz = 1024 * 8;
 
 class FileTest : public testing::TestWithParam<fs::directory_entry> {
@@ -98,3 +99,7 @@ INSTANTIATE_TEST_SUITE_P(ParseFile_parsing_files, FileTest,
 
 INSTANTIATE_TEST_SUITE_P(ParseFile_transform_files, FileTest,
                          ::testing::ValuesIn(list_test_files(test_transform_files)), get_test_name);
+
+INSTANTIATE_TEST_SUITE_P(ParseFile_fuzz_crashes_files, FileTest,
+                         ::testing::ValuesIn(list_test_files(test_fuzz_crashes_files)),
+                         get_test_name);

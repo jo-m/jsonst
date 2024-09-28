@@ -34,6 +34,14 @@ cc_test(
     linkstatic = True,
 )
 
+filegroup(
+    name = "test_fuzz_crashes",
+    srcs = glob([
+        "testdata/crashes/*.json",
+    ]),
+    visibility = ["//visibility:public"],
+)
+
 cc_test(
     name = "jsonst_test_corpus",
     size = "small",
@@ -41,6 +49,7 @@ cc_test(
     data = [
         "@com_github_nst_json_test_suite//:test_parsing",
         "@com_github_nst_json_test_suite//:test_transform",
+        ":test_fuzz_crashes",
     ],
     deps = [
         ":jsonst",
