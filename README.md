@@ -57,3 +57,16 @@ bazel run //:refresh_compile_commands
 # Run clang-tidy
 bazel build //... --config clang-tidy
 ```
+
+### Inside Docker
+
+```fish
+docker run \
+  -it --rm \
+  --env=USER=(id -u) \
+  --user=(id -u) \
+  --volume (pwd):/home/ubuntu/src/ \
+  --workdir=/home/ubuntu/src/ \
+  --entrypoint=/bin/bash \
+  gcr.io/bazel-public/bazel:latest
+```
