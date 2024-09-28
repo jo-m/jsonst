@@ -470,11 +470,6 @@ static void pop(_jsonst *j, __attribute((unused))
     assert(j->sp->type == (int)expect_type);
 
     j->sp = j->sp->prev;
-
-    if (j->sp == NULL) {
-        // Reached EOD.
-        return;
-    }
 }
 
 static jsonst_error expect_start_value(_jsonst *j, const char c) __attribute((warn_unused_result));
