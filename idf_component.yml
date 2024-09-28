@@ -1,0 +1,3 @@
+version: "0.1.0"
+description: "JSONST - A streaming JSON library"
+url: "https://github.com/jo-m/jsonst"
