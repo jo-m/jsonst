@@ -63,10 +63,26 @@ bazel build //... --config clang-tidy
 ```fish
 docker run \
   -it --rm \
-  --env=USER=(id -u) \
-  --user=(id -u) \
+  --user 0 \
   --volume (pwd):/home/ubuntu/src/ \
   --workdir=/home/ubuntu/src/ \
   --entrypoint=/bin/bash \
   gcr.io/bazel-public/bazel:latest
+```
+
+## Fuzz
+
+```fish
+sudo apt-get install afl++
+cd fuzz
+make
+
+# Test the target
+./fuzztarget ../src/testdata/test.json
+# Get some seeds
+cp bazel-src/external/com_github_nst_json_test_suite/test_*/*.json fuzz/seeds/
+# FUZZ!!
+echo core | sudo tee /proc/sys/kernel/core_pattern
+set -x AFL_SKIP_CPUFREQ 1
+afl-fuzz -i seeds/ -o fuzz_out/ -- ./fuzztarget '@@'
 ```
