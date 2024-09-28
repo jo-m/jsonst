@@ -105,8 +105,8 @@ typedef struct {
 // - An instance is good to parse one single JSON document.
 // - To parse a new one, it needs to be reset. To do that, simply call new_jsonst() again with the
 //   same mem argument.
-//   Calling new_jsonst() with the same mem argument will always return the same instance struct value, so you you
-//   can ignore it if all you want is to reset the instance.
+//   Calling new_jsonst() with the same mem argument will always return the same instance struct
+//   value, so you you can ignore it if all you want is to reset the instance.
 // - Context can be passed to the callback by optionally passing non-NULL cb_user_data here.
 //   It will be forwarded to the callback as first argument.
 // - If the memory region mem passed in here is too small to allocate an instance, NULL is returned.
