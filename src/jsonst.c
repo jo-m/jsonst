@@ -548,6 +548,13 @@ static char is_quotable(const char c) {
 
 static jsonst_error feed(_jsonst *j, const char c) __attribute((warn_unused_result));
 static jsonst_error feed(_jsonst *j, const char c) {
+    if (j->sp == NULL) {
+        if (is_ws(c)) {
+            return jsonst_success;
+        }
+        return jsonst_err_end_of_doc;
+    }
+
     // EOF, with special treatment for numbers (which have no delimiters themselves).
     // TODO: Maybe move to switch statement.
     if (c == JSONST_EOF && j->sp->type != jsonst_num) {
@@ -558,13 +565,6 @@ static jsonst_error feed(_jsonst *j, const char c) {
             return jsonst_err_invalid_eof;
         }
         return jsonst_success;
-    }
-
-    if (j->sp == NULL) {
-        if (is_ws(c)) {
-            return jsonst_success;
-        }
-        return jsonst_err_end_of_doc;
     }
 
     switch (j->sp->type) {
