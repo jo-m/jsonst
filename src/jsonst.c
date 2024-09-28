@@ -464,7 +464,8 @@ static jsonst_error push(_jsonst *j, const jsonst_type /* or jsonst_internal_sta
     return jsonst_success;
 }
 
-static void pop(_jsonst *j, const jsonst_type /* or jsonst_internal_state */ expect_type) {
+static void pop(_jsonst *j, __attribute((unused))
+                            const jsonst_type /* or jsonst_internal_state */ expect_type) {
     assert(j->sp != NULL);
     assert(j->sp->type == (int)expect_type);
 
