@@ -5,6 +5,7 @@ A minimal JSON streaming parsing library with the following features and design 
 - Fully JSON compliant (whatever that means, see [#standards-compliance](#standards-compliance))
 - Suited for embedded usage
 - C11, easy to use from C++
+- Fuzz tested
 - Low memory usage
 - No dynamic allocation (malloc)
 - No dependencies, not even stdlib (users have to do their own number parsing though, e.g. `strtod()` from `<stdlib.h>`)
