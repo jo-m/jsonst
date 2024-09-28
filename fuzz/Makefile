@@ -1,6 +1,6 @@
-DEPS = fuzztarget.c ../src/jsonst.c ../src/jsonst.h ../src/jsonst_cstd.h ../src/jsonst_util.c ../src/jsonst_util.h
+DEPS = fuzztarget.c ../src/jsonst.c ../src/include/jsonst.h ../src/include/jsonst_cstd.h ../src/jsonst_util.c ../src/include/jsonst_util.h
 
-CFLAGS = -g -O2 -std=gnu17 -Wall -Werror -Wextra -Wpedantic -Wshadow -Wsign-compare -Wunreachable-code
+CFLAGS = -g -O2 -std=gnu17 -I../src/include/ -Wall -Werror -Wextra -Wpedantic -Wshadow -Wsign-compare -Wunreachable-code
 
 CLAGS_FUZZ = -DNDEBUG
 

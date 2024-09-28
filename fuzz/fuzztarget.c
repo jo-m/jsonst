@@ -4,10 +4,8 @@
 
 // A bit crude, but good enough for our purposes.
 #include "../src/jsonst.c"
-#include "../src/jsonst.h"
-#include "../src/jsonst_cstd.h"
 #include "../src/jsonst_util.c"
-#include "../src/jsonst_util.h"
+#include "jsonst_cstd.h"
 
 #define DEFAULT_MEMSZ (8 * 1024)
 

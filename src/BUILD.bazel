@@ -5,7 +5,8 @@ cc_library(
     srcs = [
         "jsonst.c",
     ],
-    hdrs = ["jsonst.h"],
+    hdrs = ["include/jsonst.h"],
+    strip_include_prefix = "include",
     visibility = ["//visibility:public"],
 )
 
@@ -63,14 +64,16 @@ cc_test(
 cc_library(
     name = "jsonst_util",
     srcs = ["jsonst_util.c"],
-    hdrs = ["jsonst_util.h"],
+    hdrs = ["include/jsonst_util.h"],
+    strip_include_prefix = "include",
     visibility = ["//visibility:public"],
     deps = [":jsonst"],
 )
 
 cc_library(
     name = "jsonst_cstd",
-    hdrs = ["jsonst_cstd.h"],
+    hdrs = ["include/jsonst_cstd.h"],
+    strip_include_prefix = "include",
     visibility = ["//visibility:public"],
     deps = [":jsonst"],
 )
