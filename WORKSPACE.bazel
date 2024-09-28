@@ -32,9 +32,9 @@ register_toolchains(
 
 http_archive(
     name = "com_google_googletest",
-    sha256 = "b976cf4fd57b318afdb1bdb27fc708904b3e4bed482859eb94ba2b4bdd077fe2",
-    strip_prefix = "googletest-f8d7d77c06936315286eb55f8de22cd23c188571",
-    urls = ["https://github.com/google/googletest/archive/f8d7d77c06936315286eb55f8de22cd23c188571.zip"],
+    sha256 = "f179ec217f9b3b3f3c6e8b02d3e7eda997b49e4ce26d6b235c9053bec9c0bf9f",
+    strip_prefix = "googletest-1.15.2",
+    urls = ["https://github.com/google/googletest/archive/refs/tags/v1.15.2.zip"],
 )
 
 http_archive(
@@ -47,7 +47,7 @@ http_archive(
 
 http_archive(
     name = "hedron_compile_commands",
-    sha256 = "05f7fb324290c147ed29361a6a6fef7459c61816084fc07b3676a9639f4fcab7",
-    strip_prefix = "bazel-compile-commands-extractor-eca42c63700fccdc49cf58177e0a96f0f6075a68",
-    url = "https://github.com/hedronvision/bazel-compile-commands-extractor/archive/eca42c63700fccdc49cf58177e0a96f0f6075a68.tar.gz",
+    sha256 = "044b148b111e17cee61d8c3aaeed42069f7325460382340afca4919f8265094c",
+    strip_prefix = "bazel-compile-commands-extractor-1e08f8e0507b6b6b1f4416a9a22cf5c28beaba93",
+    url = "https://github.com/hedronvision/bazel-compile-commands-extractor/archive/1e08f8e0507b6b6b1f4416a9a22cf5c28beaba93.tar.gz",
 )
