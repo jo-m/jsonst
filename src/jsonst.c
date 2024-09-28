@@ -206,7 +206,7 @@ typedef enum {
     num_exp_int,
 } number_state;
 
-// By not directly integrating this into the parsing state machine we waste
+// By not directly integrating this into the parsing state machine we might waste
 // a bit of performance, but it's much easier to read.
 static bool is_valid_json_number(const char *buf, const ptrdiff_t len) {
     number_state s = num_init;
