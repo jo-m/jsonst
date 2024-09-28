@@ -16,8 +16,7 @@ TEST(JsonstTest, ParseFstream) {
     FILE *f = fopen(testdata_fname, "r");
     ASSERT_NE(f, nullptr);
 
-    uint8_t *mem = new uint8_t[DEFAULT_MEMSZ];
-    ASSERT_NE(mem, nullptr);
+    uint8_t mem[DEFAULT_MEMSZ] = {0};
 
     jsonst_config conf = {0, 0, 0};
     jsonst j = new_jsonst(mem, DEFAULT_MEMSZ, null_cb, nullptr, conf);
@@ -26,6 +25,4 @@ TEST(JsonstTest, ParseFstream) {
     const jsonst_feed_doc_ret ret = jsonst_feed_fstream(j, f);
     EXPECT_EQ(jsonst_success, ret.err);
     EXPECT_EQ(18, ret.parsed_bytes);
-
-    free(mem);
 }

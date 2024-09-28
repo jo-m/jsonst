@@ -11,9 +11,7 @@ extern "C" {
 #define DEFAULT_MEMSZ (8 * 1024)
 
 TEST(JsonstTest, ErrorLivecycle) {
-    uint8_t *mem = new uint8_t[DEFAULT_MEMSZ];
-    ASSERT_NE(mem, nullptr);
-
+    uint8_t mem[DEFAULT_MEMSZ] = {0};
     jsonst_config conf = {0, 0, 0};
     jsonst j = new_jsonst(mem, DEFAULT_MEMSZ, null_cb, nullptr, conf);
     EXPECT_EQ(jsonst_success, jsonst_feed(j, '{'));
@@ -26,9 +24,7 @@ TEST(JsonstTest, ErrorLivecycle) {
 }
 
 TEST(JsonstTest, NoCb) {
-    uint8_t *mem = new uint8_t[DEFAULT_MEMSZ];
-    EXPECT_NE(mem, nullptr);
-
+    uint8_t mem[DEFAULT_MEMSZ] = {0};
     jsonst_config conf = {0, 0, 0};
     ASSERT_DEATH(new_jsonst(mem, DEFAULT_MEMSZ, nullptr, nullptr, conf), "cb != NULL");
 }
