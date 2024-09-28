@@ -30,6 +30,8 @@ cc_test(
         ":jsonst_test_util",
         "@com_google_googletest//:gtest_main",
     ],
+    # Work around test run .so loading issue.
+    linkstatic = True,
 )
 
 cc_test(
@@ -45,6 +47,8 @@ cc_test(
         ":jsonst_test_util",
         "@com_google_googletest//:gtest_main",
     ],
+    # Work around test run .so loading issue.
+    linkstatic = True,
 )
 
 cc_library(
@@ -71,4 +75,6 @@ cc_test(
         ":jsonst_cstd",
         "@com_google_googletest//:gtest_main",
     ],
+    # Work around test run .so loading issue.
+    linkstatic = True,
 )
