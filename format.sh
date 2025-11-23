@@ -2,3 +2,5 @@
 
 shopt -s globstar
 clang-format -i src/**/*.{h,c,cc} examples/**/*.c fuzz/**/*.c
+buildifier -r .
+nix fmt .

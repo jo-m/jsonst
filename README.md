@@ -50,10 +50,7 @@ To the best of my knowledge, this library conforms to the following specificatio
 
 ## Development
 
-Requirements:
-
-1. Bazel (https://bazel.build/install/ubuntu#install-on-ubuntu)
-2. `apt-get install clang-format clang-tidy clangd gcc g++`
+Requirements: [Nix](https://nixos.org/download/) and [direnv](https://direnv.net/).
 
 Commands:
 
