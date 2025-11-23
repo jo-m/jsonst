@@ -16,10 +16,16 @@ extern "C" {
 
 namespace fs = std::filesystem;
 
-const std::string test_parsing_files = "external/com_github_nst_json_test_suite/test_parsing";
-const std::string test_transform_files = "external/com_github_nst_json_test_suite/test_transform";
+const std::string test_parsing_files = "+_repo_rules+com_github_nst_json_test_suite/test_parsing";
+const std::string test_transform_files =
+    "+_repo_rules+com_github_nst_json_test_suite/test_transform";
 const std::string test_fuzz_crashes_files = "src/testdata/crashes";
 const size_t memsz = 1024 * 8;
+
+std::string getRunfilesPath(const std::string& path) {
+    const auto base = getenv("TEST_SRCDIR");
+    return std::string(base ? base : "") + "/" + path;
+}
 
 class FileTest : public testing::TestWithParam<fs::directory_entry> {
    public:
@@ -95,10 +101,12 @@ TEST_P(FileTest, ParseFile) {
 }
 
 INSTANTIATE_TEST_SUITE_P(ParseFile_parsing_files, FileTest,
-                         ::testing::ValuesIn(list_test_files(test_parsing_files)), get_test_name);
+                         ::testing::ValuesIn(list_test_files(getRunfilesPath(test_parsing_files))),
+                         get_test_name);
 
-INSTANTIATE_TEST_SUITE_P(ParseFile_transform_files, FileTest,
-                         ::testing::ValuesIn(list_test_files(test_transform_files)), get_test_name);
+INSTANTIATE_TEST_SUITE_P(
+    ParseFile_transform_files, FileTest,
+    ::testing::ValuesIn(list_test_files(getRunfilesPath(test_transform_files))), get_test_name);
 
 INSTANTIATE_TEST_SUITE_P(ParseFile_fuzz_crashes_files, FileTest,
                          ::testing::ValuesIn(list_test_files(test_fuzz_crashes_files)),

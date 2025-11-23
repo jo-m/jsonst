@@ -17,8 +17,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "src/jsonst.h"
-#include "src/jsonst_util.h"
+#include "jsonst.h"
+#include "jsonst_util.h"
 
 static void jsonst_path_print(const jsonst_path *path) {
     printf("json");

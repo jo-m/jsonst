@@ -1,4 +1,5 @@
 /bazel-*
 /external
 /.direnv
+/.bazelrc.user
 compile_commands.json

@@ -1,4 +1,5 @@
-load("@rules_cc//cc:defs.bzl", "cc_library")
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+load("@rules_cc//cc:cc_test.bzl", "cc_test")
 
 cc_library(
     name = "jsonst",
@@ -15,10 +16,11 @@ cc_library(
     testonly = True,
     srcs = ["jsonst_test_util.cc"],
     hdrs = ["jsonst_test_util.h"],
+    linkstatic = True,
     deps = [
         ":jsonst",
         ":jsonst_util",
-        "@com_google_googletest//:gtest",
+        "@googletest//:gtest",
     ],
 )
 
@@ -26,13 +28,13 @@ cc_test(
     name = "jsonst_test",
     size = "small",
     srcs = ["jsonst_test.cc"],
+    # Work around test run .so loading issue.
+    linkstatic = True,
     deps = [
         ":jsonst",
         ":jsonst_test_util",
-        "@com_google_googletest//:gtest_main",
+        "@googletest//:gtest_main",
     ],
-    # Work around test run .so loading issue.
-    linkstatic = True,
 )
 
 filegroup(
@@ -48,17 +50,17 @@ cc_test(
     size = "small",
     srcs = ["jsonst_test_corpus.cc"],
     data = [
+        ":test_fuzz_crashes",
         "@com_github_nst_json_test_suite//:test_parsing",
         "@com_github_nst_json_test_suite//:test_transform",
-        ":test_fuzz_crashes",
-    ],
-    deps = [
-        ":jsonst",
-        ":jsonst_test_util",
-        "@com_google_googletest//:gtest_main",
     ],
     # Work around test run .so loading issue.
     linkstatic = True,
+    deps = [
+        ":jsonst",
+        ":jsonst_test_util",
+        "@googletest//:gtest_main",
+    ],
 )
 
 cc_library(
@@ -83,10 +85,10 @@ cc_test(
     size = "small",
     srcs = ["jsonst_cstd_test.cc"],
     data = ["testdata/test.json"],
-    deps = [
-        ":jsonst_cstd",
-        "@com_google_googletest//:gtest_main",
-    ],
     # Work around test run .so loading issue.
     linkstatic = True,
+    deps = [
+        ":jsonst_cstd",
+        "@googletest//:gtest_main",
+    ],
 )

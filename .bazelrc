@@ -1,28 +1,41 @@
-build --incompatible_enable_cc_toolchain_resolution
-build --action_env BAZEL_DO_NOT_DETECT_CPP_TOOLCHAIN=1
+#
+# For https://github.com/uber/hermetic_cc_toolchain.
+#
 
-# Use tags=["requires-network"] to opt-out of the enforcement.
+common --enable_platform_specific_config
+build:linux --sandbox_add_mount_pair=/tmp
+build:macos --sandbox_add_mount_pair=/var/tmp
+build:windows --sandbox_add_mount_pair=C:\Temp
+
+#
+# Various, see https://blog.aspect.build/bazelrc-flags.
+#
+
+build:linux --spawn_strategy=linux-sandbox
+# Use tags=["requires-network"] to opt-out of the no-networking enforcement.
 build --sandbox_default_allow_network=false
-build --incompatible_strict_action_env
-build --noexperimental_check_output_files
+
+common --incompatible_allow_tags_propagation
+test --incompatible_exclusive_test_sandboxed
+# build --incompatible_strict_action_env # TODO: This breaks tests.
+build --nolegacy_external_runfiles
+startup --host_jvm_args=-DBAZEL_TRACK_SOURCE_DIRECTORIES=1
+build --noexperimental_check_output_files --
+test --test_verbose_timeout_warnings
 
 test --build_tests_only
 test --test_output=all
 
-build --conlyopt='-std=c11'
-build --cxxopt='-std=c++17'
+#
+# clang-tidy
+#
 
-build --copt='-Wall'
-build --copt='-Werror'
-build --copt='-Wextra'
-build --copt='-Wpedantic'
-build --copt='-Wshadow'
-build --copt='-Wsign-compare'
-build --copt='-Wunreachable-code'
-build --copt='-iquotesrc/'
-
-# Required for erenon_bazel_clang_tidy to operate as expected
-build:clang-tidy --aspects //bazel/clang_tidy:clang_tidy.bzl%clang_tidy_aspect
+build:clang-tidy --aspects @bazel_clang_tidy//clang_tidy:clang_tidy.bzl%clang_tidy_aspect
 build:clang-tidy --output_groups=report
-# Optionally override the .clang-tidy config file target
-# build:clang-tidy --@erenon_bazel_clang_tidy//:clang_tidy_config=//:clang_tidy_config
+build:clang-tidy --@bazel_clang_tidy//:clang_tidy_config=//:clang_tidy_config
+
+#
+# Allow user config.
+#
+
+try-import %workspace%/.bazelrc.user

@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "src/jsonst_cstd.h"
+#include "jsonst_cstd.h"
 
 typedef struct {
     double *val;

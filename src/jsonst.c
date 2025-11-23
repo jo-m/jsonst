@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #define Sizeof(x) (ptrdiff_t)sizeof(x)
-#define Alignof(x) (ptrdiff_t) _Alignof(x)
+#define Alignof(x) (ptrdiff_t)_Alignof(x)
 #define Countof(a) (Sizeof(a) / Sizeof(*(a)))
 #define Lengthof(s) (Countof(s) - 1)
 

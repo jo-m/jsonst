@@ -1,0 +1,54 @@
+#
+# Toolchain
+#
+bazel_dep(name = "hermetic_cc_toolchain", version = "4.0.1")
+
+toolchains = use_extension("@hermetic_cc_toolchain//toolchain:ext.bzl", "toolchains")
+use_repo(toolchains, "zig_sdk")
+
+register_toolchains(
+    "@zig_sdk//toolchain:linux_amd64_gnu.2.27",  # 2.27 is Ubuntu 18.04.
+    "@zig_sdk//toolchain:linux_arm64_gnu.2.27",
+    "@zig_sdk//toolchain:darwin_amd64",
+    "@zig_sdk//toolchain:darwin_arm64",
+    "@zig_sdk//toolchain:windows_amd64",
+    "@zig_sdk//toolchain:windows_arm64",
+)
+
+#
+# Bazel and dev dependencies
+#
+
+bazel_dep(name = "rules_cc", version = "0.2.14")
+
+bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
+git_override(
+    module_name = "hedron_compile_commands",
+    # https://github.com/hedronvision/bazel-compile-commands-extractor/commits/main
+    commit = "abb61a688167623088f8768cc9264798df6a9d10",
+    remote = "https://github.com/hedronvision/bazel-compile-commands-extractor.git",
+)
+
+bazel_dep(name = "bazel_clang_tidy", dev_dependency = True)
+git_override(
+    module_name = "bazel_clang_tidy",
+    # https://github.com/erenon/bazel_clang_tidy/commits/master
+    commit = "496018e020cf0a7d813a2b5a9d246ec55340a7ed",
+    remote = "https://github.com/erenon/bazel_clang_tidy.git",
+)
+
+#
+# Dependencies
+#
+
+bazel_dep(name = "googletest", version = "1.17.0.bcr.2", dev_dependency = True)
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "com_github_nst_json_test_suite",
+    build_file = "//third_party:com_github_nst_json_test_suite.BUILD",
+    sha256 = "c9e3e442238a158bbf0df22a270df3de412df5ee4dccc6f96712ba5a2e1038ac",
+    strip_prefix = "JSONTestSuite-984defc2deaa653cb73cd29f4144a720ec9efe7c",
+    urls = ["https://github.com/nst/JSONTestSuite/archive/984defc2deaa653cb73cd29f4144a720ec9efe7c.zip"],
+)
