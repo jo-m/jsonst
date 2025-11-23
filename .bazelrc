@@ -11,7 +11,7 @@ build:windows --sandbox_add_mount_pair=C:\Temp
 # Various, see https://blog.aspect.build/bazelrc-flags.
 #
 
-build:linux --spawn_strategy=linux-sandbox
+build:linux --spawn_strategy=sandboxed
 # Use tags=["requires-network"] to opt-out of the no-networking enforcement.
 build --sandbox_default_allow_network=false
 
@@ -20,7 +20,7 @@ test --incompatible_exclusive_test_sandboxed
 # build --incompatible_strict_action_env # TODO: This breaks tests.
 build --nolegacy_external_runfiles
 startup --host_jvm_args=-DBAZEL_TRACK_SOURCE_DIRECTORIES=1
-build --noexperimental_check_output_files --
+build --noexperimental_check_output_files --noexperimental_check_external_repository_files
 test --test_verbose_timeout_warnings
 
 test --build_tests_only
@@ -33,6 +33,22 @@ test --test_output=all
 build:clang-tidy --aspects @bazel_clang_tidy//clang_tidy:clang_tidy.bzl%clang_tidy_aspect
 build:clang-tidy --output_groups=report
 build:clang-tidy --@bazel_clang_tidy//:clang_tidy_config=//:clang_tidy_config
+
+#
+# C/C++ flags.
+#
+
+build --conlyopt='-std=c11'
+build --cxxopt='-std=c++17'
+
+build --copt="-Wall"
+build --copt="-Werror"
+build --copt="-Wextra"
+build --copt="-Wpedantic"
+build --copt="-Wshadow"
+build --copt="-Wsign-compare"
+build --copt="-Wunreachable-code"
+build --copt="-iquotesrc/"
 
 #
 # Allow user config.
